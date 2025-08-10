@@ -51,6 +51,10 @@ func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
 
 	pty := C.vte_pty_new_sync(f, c, &gerr)
 	if pty == nil {
+		if gerr == nil {
+			return nil, errors.New("vte: vte_pty_new_sync returned nil pointer")
+		}
+
 		defer C.g_error_free(gerr)
 		return nil, errors.New(goString(gerr.message))
 	}
@@ -69,6 +73,10 @@ func PtyNewForeignSync(file *os.File, cancellable *glib.Cancellable) (*Pty, erro
 
 	pty := C.vte_pty_new_foreign_sync(fd, c, &gerr)
 	if pty == nil {
+		if gerr == nil {
+			return nil, errors.New("vte: vte_pty_new_foreign_sync returned nil pointer")
+		}
+
 		defer C.g_error_free(gerr)
 		return nil, errors.New(goString(gerr.message))
 	}
@@ -93,6 +101,10 @@ func (pty *Pty) GetSize() (*PtySize, error) {
 	success := C.vte_pty_get_size(pty.ptr, &rows, &columns, &gerr)
 
 	if !goBool(success) {
+		if gerr == nil {
+			return nil, errors.New("vte: a call to vte_pty_get_size was unsuccessful")
+		}
+
 		defer C.g_error_free(gerr)
 		return nil, errors.New(goString(gerr.message))
 	}
@@ -115,6 +127,10 @@ func (pty *Pty) SetSize(size *PtySize) error {
 	success := C.vte_pty_set_size(pty.ptr, rows, columns, &gerr)
 
 	if !goBool(success) {
+		if gerr == nil {
+			return errors.New("vte: a call to vte_pty_set_size was unsuccessful")
+		}
+
 		defer C.g_error_free(gerr)
 		return errors.New(goString(gerr.message))
 	}
@@ -133,6 +149,10 @@ func (pty *Pty) SetUTF8(v bool) error {
 	success := C.vte_pty_set_utf8(pty.ptr, utf8, &gerr)
 
 	if !goBool(success) {
+		if gerr == nil {
+			return errors.New("vte: a call to vte_pty_set_utf8 was unsuccessful")
+		}
+
 		defer C.g_error_free(gerr)
 		return errors.New(goString(gerr.message))
 	}
