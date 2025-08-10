@@ -4,6 +4,7 @@ package vte
 // #cgo pkg-config: gtk+-3.0 vte-2.91
 //
 // #include <gtk/gtk.h>
+// #include <pango/pango.h>
 // #include <vte/vte.h>
 //
 // #include "exec.go.h"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
+	"github.com/gotk3/gotk3/pango"
 )
 
 // Terminal is a wrapper around VteTerminal.
@@ -359,6 +361,81 @@ func (t *Terminal) GetEnableSixel() bool {
 // [SIXEL]: https://en.wikipedia.org/wiki/Sixel
 func (t *Terminal) SetEnableSixel(v bool) {
 	C.vte_terminal_set_enable_sixel(t.ptr, gboolean(v))
+}
+
+// GetFont queries the terminal for information about the font which is used to
+// draw text in the terminal.
+//
+// The actual font takes the font scale into account, this is not reflected in
+// the return value, the unscaled font is returned.
+func (t *Terminal) GetFont() *pango.FontDescription {
+	return wrapPangoFontDescription(C.vte_terminal_get_font(t.ptr))
+}
+
+// SetFont sets the font used for rendering all text displayed by the terminal.
+// The terminal will immediately attempt to load the desired font, retrieve its
+// metrics, and attempt to resize itself to keep the same number of rows and
+// columns. The font scale is applied to the specified font.
+func (t *Terminal) SetFont(desc *pango.FontDescription) {
+	C.vte_terminal_set_font(t.ptr, unwrapPangoFontDescription(desc))
+}
+
+// SetFontFromString is a convenience method that sets font used for rendering
+// all text displayed by the terminal from font description string.
+//
+// # Description string format
+//
+// The string must have the form:
+//
+//	[FAMILY-LIST] [STYLE-OPTIONS] [SIZE] [VARIATIONS] [FEATURES]
+//
+// FAMILY-LIST is a comma-separated list of families, possibly terminated by a
+// comma.
+//
+// STYLE-OPTIONS is a whitespace-separated list of words. Each word describes
+// one of style, variant, weight, stretch, or gravity.
+//
+//   - Styles: "Normal", "Roman", "Oblique", "Italic".
+//
+//   - Variants: "Small-Caps", "All-Small-Caps", "Petite-Caps",
+//     "All-Petite-Caps", "Unicase", "Title-Caps".
+//
+//   - Weights: "Thin", "Ultra-Light", "Extra-Light", "Light", "Semi-Light",
+//     "Demi-Light", "Book", "Regular", "Medium", "Semi-Bold", "Demi-Bold",
+//     "Bold", "Ultra-Bold", "Extra-Bold", "Heavy", "Black", "Ultra-Black",
+//     "Extra-Black".
+//
+//   - Stretch values: "Ultra-Condensed", "Extra-Condensed", "Condensed",
+//     "Semi-Condensed", "Semi-Expanded", "Expanded", "Extra-Expanded",
+//     "Ultra-Expanded".
+//
+//   - Gravity values: "Not-Rotated", "South", "Upside-Down", "North",
+//     "Rotated-Left", "East", "Rotated-Right", "West".
+//
+//   - Color values: "With-Color", "Without-Color".
+//
+// VARIATIONS is a comma-separated list of font variations of the form
+// @‍axis1=value,axis2=value,...
+//
+// FEATURES is a comma-separated list of font features of the form
+// #‍feature1=value,feature2=value,... The =value part can be ommitted if
+// the value is 1.
+//
+// Any one of the options may be absent. If FAMILY-LIST is absent, then the
+// family_name field of the resulting font description will be initialized to
+// NULL. If STYLE-OPTIONS is missing, then all style options will be set to the
+// default values. If SIZE is missing, the size in the resulting font
+// description will be set to 0.
+//
+// A typical example:
+//
+//	Cantarell Italic Light 15 @‍wght=200 #‍tnum=1.
+func (t *Terminal) SetFontFromString(s string) {
+	cstr := C.CString(s)
+	desc := C.pango_font_description_from_string(cstr)
+	C.free(unsafe.Pointer(cstr))
+	C.vte_terminal_set_font(t.ptr, desc)
+	C.free(unsafe.Pointer(desc))
 }
 
 // GetTextBlinkMode reports whether or not the terminal will allow blinking text.

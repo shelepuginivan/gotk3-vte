@@ -1,10 +1,13 @@
 package vte
 
 // #include <gtk/gtk.h>
+// #include <pango/pango.h>
 // #include <vte/vte.h>
 import "C"
 import (
 	"unsafe"
+
+	"github.com/gotk3/gotk3/pango"
 )
 
 func goString(cstr *C.gchar) string {
@@ -39,4 +42,23 @@ func cStringArrFree(cArr []*C.char) {
 			C.free(unsafe.Pointer(cstr))
 		}
 	}
+}
+
+func wrapPangoFontDescription(desc *C.PangoFontDescription) *pango.FontDescription {
+	fd := &pango.FontDescription{}
+
+	// We need to set `fd.pangoFontDescription`, but it is private.
+	// Hence, we create a pointer to this field and write desc to it.
+	ptrFd := unsafe.Pointer(fd)
+	ptrFdNative := (**C.PangoFontDescription)(ptrFd)
+
+	*ptrFdNative = desc
+	return fd
+}
+
+func unwrapPangoFontDescription(desc *pango.FontDescription) *C.PangoFontDescription {
+	ptrFd := unsafe.Pointer(desc)
+	ptrFdNative := (**C.PangoFontDescription)(ptrFd)
+
+	return *ptrFdNative
 }
