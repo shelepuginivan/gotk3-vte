@@ -7,6 +7,7 @@ import "C"
 import (
 	"unsafe"
 
+	"github.com/gotk3/gotk3/cairo"
 	"github.com/gotk3/gotk3/pango"
 )
 
@@ -61,4 +62,21 @@ func unwrapPangoFontDescription(desc *pango.FontDescription) *C.PangoFontDescrip
 	ptrFdNative := (**C.PangoFontDescription)(ptrFd)
 
 	return *ptrFdNative
+}
+
+func wrapCairoFontOptions(options *C.cairo_font_options_t) *cairo.FontOptions {
+	op := &cairo.FontOptions{}
+
+	ptrOp := unsafe.Pointer(op)
+	ptrOpNative := (**C.cairo_font_options_t)(ptrOp)
+
+	*ptrOpNative = options
+	return op
+}
+
+func unwrapCairoFontOptions(options *cairo.FontOptions) *C.cairo_font_options_t {
+	ptrOp := unsafe.Pointer(options)
+	ptrOpNative := (**C.cairo_font_options_t)(ptrOp)
+
+	return *ptrOpNative
 }

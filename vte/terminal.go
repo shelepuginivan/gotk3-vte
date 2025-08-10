@@ -3,6 +3,7 @@ package vte
 
 // #cgo pkg-config: gtk+-3.0 vte-2.91
 //
+// #include <cairo.h>
 // #include <gtk/gtk.h>
 // #include <pango/pango.h>
 // #include <vte/vte.h>
@@ -16,6 +17,7 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/gotk3/gotk3/cairo"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/gotk3/gotk3/pango"
@@ -436,6 +438,17 @@ func (t *Terminal) SetFontFromString(s string) {
 	C.free(unsafe.Pointer(cstr))
 	C.vte_terminal_set_font(t.ptr, desc)
 	C.free(unsafe.Pointer(desc))
+}
+
+// GetFontOptions returns terminal's font options.
+func (t *Terminal) GetFontOptions() *cairo.FontOptions {
+	return wrapCairoFontOptions(C.vte_terminal_get_font_options(t.ptr))
+}
+
+// SetFontOptions sets terminal's font options. Use nil to use the default
+// options.
+func (t *Terminal) SetFontOptions(options *cairo.FontOptions) {
+	C.vte_terminal_set_font_options(t.ptr, unwrapCairoFontOptions(options))
 }
 
 // GetTextBlinkMode reports whether or not the terminal will allow blinking text.
