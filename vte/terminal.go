@@ -95,6 +95,46 @@ func (t *Terminal) SetPty(pty *Pty) {
 	C.vte_terminal_set_pty(t.ptr, pty.ptr)
 }
 
+// GetXAlign returns the horizontal alignment of terminal within its allocation.
+func (t *Terminal) GetXAlign() Align {
+	return Align(C.vte_terminal_get_xalign(t.ptr))
+}
+
+// SetXAlign sets the horizontal alignment of terminal within its allocation.
+func (t *Terminal) SetXAlign(align Align) {
+	C.vte_terminal_set_xalign(t.ptr, C.VteAlign(align))
+}
+
+// GetYAlign returns the vertical alignment of terminal within its allocation.
+func (t *Terminal) GetYAlign() Align {
+	return Align(C.vte_terminal_get_yalign(t.ptr))
+}
+
+// SetYAlign sets the vertical alignment of terminal within its allocation.
+func (t *Terminal) SetYAlign(align Align) {
+	C.vte_terminal_set_yalign(t.ptr, C.VteAlign(align))
+}
+
+// GetXFill returns the horizontal fillment of terminal within its allocation.
+func (t *Terminal) GetXFill() bool {
+	return goBool(C.vte_terminal_get_xfill(t.ptr))
+}
+
+// SetXFill sets the horizontal fillment of terminal within its allocation.
+func (t *Terminal) SetXFill(v bool) {
+	C.vte_terminal_set_xfill(t.ptr, gboolean(v))
+}
+
+// GetYFill returns the vertical fillment of terminal within its allocation.
+func (t *Terminal) GetYFill() bool {
+	return goBool(C.vte_terminal_get_yfill(t.ptr))
+}
+
+// SetYFill sets the vertical fillment of terminal within its allocation.
+func (t *Terminal) SetYFill(v bool) {
+	C.vte_terminal_set_yfill(t.ptr, gboolean(v))
+}
+
 // SpawnAsync is a convenience function that wraps creating the [Pty] and
 // spawning the child process on it. See [Pty.SpawnAsync] for more information.
 func (t *Terminal) SpawnAsync(cmd *Command) {
