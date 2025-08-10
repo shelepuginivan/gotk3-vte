@@ -1,6 +1,7 @@
 package vte
 
-// CJKAmbiguousWidth represents width of ambiguous-width characters.
+// CJKAmbiguousWidth is an enumeration type that represents width of
+// ambiguous-width characters.
 type CJKAmbiguousWidth int
 
 const (
