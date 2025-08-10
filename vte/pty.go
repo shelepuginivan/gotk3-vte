@@ -179,7 +179,7 @@ func (pty *Pty) SpawnAsync(cmd *Command) {
 		workdir               = C.CString(cmd.Dir)
 		argv                  = cStringArr(cmd.Args)
 		envv                  = cStringArr(cmd.Env)
-		spawnFlags            = C.GSpawnFlags(cmd.Flags)
+		spawnFlags            = C.GSpawnFlags(cmd.SpawnFlags)
 		childSetup            C.GSpawnChildSetupFunc
 		childSetupData        C.gpointer
 		cTimeout              = C.int(cmd.Timeout.Milliseconds())

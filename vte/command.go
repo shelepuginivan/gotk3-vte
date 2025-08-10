@@ -24,7 +24,10 @@ type Command struct {
 	Dir string
 
 	// Command spawn flags.
-	Flags SpawnFlags
+	SpawnFlags SpawnFlags
+
+	// Command PTY flags.
+	PtyFlags PtyFlags
 
 	// Timeout of the command.
 	Timeout time.Duration
@@ -51,10 +54,17 @@ func WithWorkdir(workdir string) CommandOption {
 	}
 }
 
-// WithFlags sets command spawn flags.
-func WithFlags(flags SpawnFlags) CommandOption {
+// WithSpawnFlags sets command spawn flags.
+func WithSpawnFlags(flags SpawnFlags) CommandOption {
 	return func(c *Command) {
-		c.Flags = flags
+		c.SpawnFlags = flags
+	}
+}
+
+// WithPtyFlags sets command PTY flags.
+func WithPtyFlags(flags PtyFlags) CommandOption {
+	return func(c *Command) {
+		c.PtyFlags = flags
 	}
 }
 
