@@ -695,3 +695,11 @@ func (t *Terminal) SpawnAsync(cmd *Command) {
 		userData,
 	)
 }
+
+// Reset resets as much of the terminal's internal state as possible,
+// discarding any unprocessed input data, resetting character attributes,
+// cursor state, national character set state, status line, terminal modes
+// (insert/delete), selection state, and encoding.
+func (t *Terminal) Reset(clearTabstops, clearHistory bool) {
+	C.vte_terminal_reset(t.ptr, gboolean(clearTabstops), gboolean(clearTabstops))
+}
