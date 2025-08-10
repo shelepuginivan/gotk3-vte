@@ -6,7 +6,6 @@ package vte
 // #include "glib.go.h"
 import "C"
 import (
-	"errors"
 	"sync"
 )
 
@@ -76,7 +75,9 @@ func terminalSpawnAsyncCallback(_ *C.VteTerminal, pid C.GPid, gerr *C.GError, cC
 
 	var err error
 	if gerr != nil {
-		err = errors.New(goString(gerr.message))
+		err = errFromGError("vte_terminal_spawn_async", gerr)
+		C.g_error_free(gerr)
 	}
+
 	cmd.OnSpawn(int(pid), err)
 }

@@ -7,7 +7,6 @@ package vte
 // #include "glib.go.h"
 import "C"
 import (
-	"errors"
 	"os"
 	"unsafe"
 
@@ -36,11 +35,11 @@ func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
 	pty := C.vte_pty_new_sync(f, c, &gerr)
 	if pty == nil {
 		if gerr == nil {
-			return nil, errors.New("vte: vte_pty_new_sync returned nil pointer")
+			return nil, errNilPointer("vte_pty_new_sync")
 		}
 
 		defer C.g_error_free(gerr)
-		return nil, errors.New(goString(gerr.message))
+		return nil, errFromGError("vte_pty_new_sync", gerr)
 	}
 
 	return &Pty{pty}, nil
@@ -58,11 +57,11 @@ func PtyNewForeignSync(file *os.File, cancellable *glib.Cancellable) (*Pty, erro
 	pty := C.vte_pty_new_foreign_sync(fd, c, &gerr)
 	if pty == nil {
 		if gerr == nil {
-			return nil, errors.New("vte: vte_pty_new_foreign_sync returned nil pointer")
+			return nil, errNilPointer("vte_pty_new_foreign_sync")
 		}
 
 		defer C.g_error_free(gerr)
-		return nil, errors.New(goString(gerr.message))
+		return nil, errFromGError("vte_pty_new_foreign_sync", gerr)
 	}
 
 	return &Pty{pty}, nil
@@ -86,11 +85,11 @@ func (pty *Pty) GetSize() (*PtySize, error) {
 
 	if !goBool(success) {
 		if gerr == nil {
-			return nil, errors.New("vte: a call to vte_pty_get_size was unsuccessful")
+			return nil, errFailed("vte_pty_get_size")
 		}
 
 		defer C.g_error_free(gerr)
-		return nil, errors.New(goString(gerr.message))
+		return nil, errFromGError("vte_pty_get_size", gerr)
 	}
 
 	return &PtySize{
@@ -112,11 +111,11 @@ func (pty *Pty) SetSize(size *PtySize) error {
 
 	if !goBool(success) {
 		if gerr == nil {
-			return errors.New("vte: a call to vte_pty_set_size was unsuccessful")
+			return errFailed("vte_pty_set_size")
 		}
 
 		defer C.g_error_free(gerr)
-		return errors.New(goString(gerr.message))
+		return errFromGError("vte_pty_get_size", gerr)
 	}
 
 	return nil
@@ -134,11 +133,11 @@ func (pty *Pty) SetUTF8(v bool) error {
 
 	if !goBool(success) {
 		if gerr == nil {
-			return errors.New("vte: a call to vte_pty_set_utf8 was unsuccessful")
+			return errFailed("vte_pty_set_utf8")
 		}
 
 		defer C.g_error_free(gerr)
-		return errors.New(goString(gerr.message))
+		return errFromGError("vte_pty_set_utf8", gerr)
 	}
 
 	return nil
@@ -205,11 +204,11 @@ func (pty *Pty) spawnFinish(res *C.GAsyncResult) (int, error) {
 
 	if !goBool(success) {
 		if gerr == nil {
-			return 0, errors.New("vte: a call to vte_pty_spawn_finish was unsuccessful")
+			return 0, errFailed("vte_pty_spawn_finish")
 		}
 
 		defer C.g_error_free(gerr)
-		return 0, errors.New(goString(gerr.message))
+		return 0, errFromGError("vte_pty_spawn_finish", gerr)
 	}
 
 	return int(pid), nil
