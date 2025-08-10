@@ -6,6 +6,10 @@ static GCancellable *toCancellable(void *p) {
     return (G_CANCELLABLE(p));
 }
 
+static GMenuModel *toMenuModel(void *p) {
+    return (G_MENU_MODEL(p));
+}
+
 static uint gpointerToUint(gpointer i) {
     return (GPOINTER_TO_UINT(i));
 }
