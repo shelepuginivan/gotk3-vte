@@ -3,7 +3,7 @@ package vte
 // #include <vte/vte.h>
 import "C"
 
-// PtyFlags represents VtePtyFlags.
+// PtyFlags is a bitfield type that represents [Pty] flags.
 type PtyFlags int
 
 const (

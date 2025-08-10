@@ -3,7 +3,8 @@ package vte
 // #include <glib.h>
 import "C"
 
-// SpawnFlags represents flags passed to spawn functions.
+// SpawnFlags is a bitfield type that represents flags passed to spawn
+// functions.
 type SpawnFlags int
 
 const (
