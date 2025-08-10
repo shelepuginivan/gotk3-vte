@@ -3,6 +3,7 @@ package vte
 // #include <glib.h>
 // #include <gtk/gtk.h>
 // #include <vte/vte.h>
+// #include "exec.go.h"
 // #include "glib.go.h"
 import "C"
 import (
@@ -168,6 +169,12 @@ func (pty *Pty) SetUTF8(v bool) error {
 // [SPAWN_LEAVE_DESCRIPTORS_OPEN] is not supported; and
 // [SPAWN_DO_NOT_REAP_CHILD] will always be added to spawn_flags.
 func (pty *Pty) SpawnAsync(cmd *Command) {
+	var ccallID C.gpointer
+	if cmd.OnSpawn != nil {
+		callID := assignCallID(cmd)
+		ccallID = C.uintToGpointer(C.uint(callID))
+	}
+
 	var (
 		workdir               = C.CString(cmd.Dir)
 		argv                  = cStringArr(cmd.Args)
@@ -178,8 +185,8 @@ func (pty *Pty) SpawnAsync(cmd *Command) {
 		cTimeout              = C.int(cmd.Timeout.Milliseconds())
 		cCancellable          = C.toCancellable(unsafe.Pointer(cmd.Cancellable.GObject))
 		childSetupDataDestroy C.GDestroyNotify
-		callback              C.GAsyncReadyCallback
-		userData              C.gpointer
+		callback              = C.GAsyncReadyCallback(C.ptySpawnAsyncCallback)
+		userData              = ccallID
 	)
 
 	defer C.free(unsafe.Pointer(workdir))
@@ -200,4 +207,24 @@ func (pty *Pty) SpawnAsync(cmd *Command) {
 		callback,
 		userData,
 	)
+}
+
+func (pty *Pty) spawnFinish(res *C.GAsyncResult) (int, error) {
+	var (
+		gerr *C.GError
+		pid  C.GPid
+	)
+
+	success := C.vte_pty_spawn_finish(pty.ptr, res, &pid, &gerr)
+
+	if !goBool(success) {
+		if gerr == nil {
+			return 0, errors.New("vte: a call to vte_pty_spawn_finish was unsuccessful")
+		}
+
+		defer C.g_error_free(gerr)
+		return 0, errors.New(goString(gerr.message))
+	}
+
+	return int(pid), nil
 }
