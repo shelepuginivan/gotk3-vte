@@ -31,6 +31,10 @@ type Command struct {
 
 	// GLib Cancellable object.
 	Cancellable *glib.Cancellable
+
+	// OnSpawn is a callback that runs when command is spawned.
+	// The second argument indicates whether there was an error.
+	OnSpawn func(pid int, err error)
 }
 
 // WithEnv adds variable to the command environment.
@@ -65,6 +69,12 @@ func WithTimeout(timeout time.Duration) CommandOption {
 func WithCancellable(cancellable *glib.Cancellable) CommandOption {
 	return func(c *Command) {
 		c.Cancellable = cancellable
+	}
+}
+
+func WithOnSpawn(callback func(pid int, err error)) CommandOption {
+	return func(c *Command) {
+		c.OnSpawn = callback
 	}
 }
 
