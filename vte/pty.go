@@ -1,6 +1,5 @@
 package vte
 
-// #cgo pkg-config: gtk+-3.0 vte-2.91
 // #include <glib.h>
 // #include <gtk/gtk.h>
 // #include <vte/vte.h>
@@ -9,8 +8,6 @@ import "C"
 import (
 	"errors"
 	"os"
-	"os/exec"
-	"time"
 	"unsafe"
 
 	"github.com/gotk3/gotk3/glib"
@@ -170,21 +167,16 @@ func (pty *Pty) SetUTF8(v bool) error {
 // and stderr of the child process will always be connected to the PTY. Also
 // [SPAWN_LEAVE_DESCRIPTORS_OPEN] is not supported; and
 // [SPAWN_DO_NOT_REAP_CHILD] will always be added to spawn_flags.
-func (pty *Pty) SpawnAsync(
-	cmd *exec.Cmd,
-	flags SpawnFlags,
-	timeout time.Duration,
-	cancellable *glib.Cancellable,
-) {
+func (pty *Pty) SpawnAsync(cmd *Command) {
 	var (
 		workdir               = C.CString(cmd.Dir)
 		argv                  = cStringArr(cmd.Args)
 		envv                  = cStringArr(cmd.Env)
-		spawnFlags            = C.GSpawnFlags(flags)
+		spawnFlags            = C.GSpawnFlags(cmd.Flags)
 		childSetup            C.GSpawnChildSetupFunc
 		childSetupData        C.gpointer
-		cTimeout              = C.int(timeout.Milliseconds())
-		cCancellable          = C.toCancellable(unsafe.Pointer(cancellable.GObject))
+		cTimeout              = C.int(cmd.Timeout.Milliseconds())
+		cCancellable          = C.toCancellable(unsafe.Pointer(cmd.Cancellable.GObject))
 		childSetupDataDestroy C.GDestroyNotify
 		callback              C.GAsyncReadyCallback
 		userData              C.gpointer
