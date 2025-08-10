@@ -49,6 +49,34 @@ func TerminalNew() (*Terminal, error) {
 	}, nil
 }
 
+// CopyClipboardFormat copies selected text to clipboard in the specified
+// format.
+func (t *Terminal) CopyClipboardFormat(format Format) {
+	C.vte_terminal_copy_clipboard_format(t.ptr, C.VteFormat(format))
+}
+
+// CopyPrimary copies selected text in the primary selection.
+func (t *Terminal) CopyPrimary() {
+	C.vte_terminal_copy_primary(t.ptr)
+}
+
+// PasteClipboard pastes contents of clipboard to the terminal.
+func (t *Terminal) PasteClipboard() {
+	C.vte_terminal_paste_clipboard(t.ptr)
+}
+
+// PastePrimary pastes contents of the primary selection to the terminal.
+func (t *Terminal) PastePrimary() {
+	C.vte_terminal_paste_primary(t.ptr)
+}
+
+// PasteText pastes text to the terminal.
+func (t *Terminal) PasteText(text string) {
+	s := C.CString(text)
+	C.vte_terminal_paste_text(t.ptr, s)
+	C.free(unsafe.Pointer(s))
+}
+
 // GetPty returns [Pty] associated with the terminal.
 func (t *Terminal) GetPty() *Pty {
 	pty := C.vte_terminal_get_pty(t.ptr)
