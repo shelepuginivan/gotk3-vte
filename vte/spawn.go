@@ -1,6 +1,5 @@
 package vte
 
-// #cgo pkg-config: gtk+-3.0 vte-2.91
 // #include <glib.h>
 import "C"
 
