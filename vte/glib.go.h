@@ -17,3 +17,7 @@ static uint gpointerToUint(gpointer i) {
 static gpointer uintToGpointer(uint i) {
     return (GUINT_TO_POINTER(i));
 }
+
+static glong uintToGlong(uint i) {
+    return ((glong)i);
+}

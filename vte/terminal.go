@@ -113,6 +113,20 @@ func (t *Terminal) SetAllowHyperlink(v bool) {
 	C.vte_terminal_set_allow_hyperlink(t.ptr, gboolean(v))
 }
 
+// GetHoveredURI returns the currently hovered hyperlink URI, or an empty
+// string ("") if no hyperlinks are hovered.
+func (t *Terminal) GetHoveredURI() string {
+	v, err := t.GetProperty("hyperlink-hover-uri")
+	if err != nil {
+		return ""
+	}
+	s, ok := v.(string)
+	if !ok {
+		return ""
+	}
+	return s
+}
+
 // GetAudibleBell reports whether or not the terminal will beep when the
 // child outputs the "bl" sequence.
 func (t *Terminal) GetAudibleBell() bool {
@@ -465,6 +479,126 @@ func (t *Terminal) SetFontOptions(options *cairo.FontOptions) {
 		opt = unwrapCairoFontOptions(options)
 	}
 	C.vte_terminal_set_font_options(t.ptr, opt)
+}
+
+// GetInputEnabled reports whether the terminal allows user input. When user
+// input is disabled, key press and mouse button press and motion events are
+// not sent to the terminal's child.
+func (t *Terminal) GetInputEnabled() bool {
+	return goBool(C.vte_terminal_get_input_enabled(t.ptr))
+}
+
+// SetInputEnabled controls whether the terminal allows user input. When user
+// input is disabled, key press and mouse button press and motion events are
+// not sent to the terminal's child.
+func (t *Terminal) SetInputEnabled(v bool) {
+	C.vte_terminal_set_input_enabled(t.ptr, gboolean(v))
+}
+
+// GetPointerAutohide returns mouse autohide setting. When autohiding is
+// enabled, the mouse cursor will be hidden when the user presses a key and
+// shown when the user moves the mouse.
+func (t *Terminal) GetPointerAutohide() bool {
+	v, err := t.GetProperty("pointer-autohide")
+	if err != nil {
+		return false
+	}
+	b, ok := v.(bool)
+	if !ok {
+		return false
+	}
+	return b
+}
+
+// SetPointerAutohide sets mouse autohide setting. When autohiding is
+// enabled, the mouse cursor will be hidden when the user presses a key and
+// shown when the user moves the mouse.
+func (t *Terminal) SetPointerAutohide(v bool) {
+	t.SetProperty("pointer-autohide", v)
+}
+
+// GetScrollOnInsert reports whether or not the terminal will forcibly scroll
+// to the bottom of the viewable history when the text is inserted
+// (e.g. by a paste).
+func (t *Terminal) GetScrollOnInsert() bool {
+	return goBool(C.vte_terminal_get_scroll_on_insert(t.ptr))
+}
+
+// SetScrollOnInsert controls whether or not the terminal will forcibly scroll
+// to the bottom of the viewable history when the text is inserted
+// (e.g. by a paste).
+func (t *Terminal) SetScrollOnInsert(v bool) {
+	C.vte_terminal_set_scroll_on_insert(t.ptr, gboolean(v))
+}
+
+// GetScrollOnKeystroke reports whether or not the terminal will forcibly
+// scroll to the bottom of the viewable history when the user presses a key.
+// Modifier keys do not trigger this behavior.
+func (t *Terminal) GetScrollOnKeystroke() bool {
+	return goBool(C.vte_terminal_get_scroll_on_keystroke(t.ptr))
+}
+
+// SetScrollOnKeystroke controls whether or not the terminal will forcibly
+// scroll to the bottom of the viewable history when the user presses a key.
+// Modifier keys do not trigger this behavior.
+func (t *Terminal) SetScrollOnKeystroke(v bool) {
+	C.vte_terminal_set_scroll_on_keystroke(t.ptr, gboolean(v))
+}
+
+// GetScrollOnOutput reports whether or not the terminal will forcibly scroll
+// to the bottom of the viewable history when the new data is received from the
+// child.
+func (t *Terminal) GetScrollOnOutput() bool {
+	return goBool(C.vte_terminal_get_scroll_on_output(t.ptr))
+}
+
+// SetScrollOnOutput controls whether or not the terminal will forcibly scroll
+// to the bottom of the viewable history when the new data is received from the
+// child.
+func (t *Terminal) SetScrollOnOutput(v bool) {
+	C.vte_terminal_set_scroll_on_output(t.ptr, gboolean(v))
+}
+
+// GetScrollUnit returns scroll measurement unit of terminal's
+// [github.com/gotk3/gotk3/gtk.Adjustment].
+func (t *Terminal) GetScrollUnit() ScrollUnit {
+	isPixels := goBool(C.vte_terminal_get_scroll_unit_is_pixels(t.ptr))
+	if isPixels {
+		return SCROLL_UNIT_PIXELS
+	} else {
+		return SCROLL_UNIT_LINES
+	}
+}
+
+// SetScrollUnit controls scroll measurement unit of terminal's
+// [github.com/gotk3/gotk3/gtk.Adjustment].
+//
+// It may be useful to set unit to [SCROLL_UNIT_PIXELS] when the terminal is the
+// child of a [github.com/gotk3/gotk3/gtk.ScrolledWindow] to fix some bugs with
+// kinetic scrolling.
+func (t *Terminal) SetScrollUnit(unit ScrollUnit) {
+	isPixels := unit == SCROLL_UNIT_PIXELS
+	C.vte_terminal_set_scroll_unit_is_pixels(t.ptr, gboolean(isPixels))
+}
+
+// GetScrollbackLines returns the length of the scrollback buffer used by the
+// terminal.
+func (t *Terminal) GetScrollbackLines() uint {
+	return uint(C.vte_terminal_get_scrollback_lines(t.ptr))
+}
+
+// SetScrollbackLines sets the length of the scrollback buffer used by the
+// terminal.
+//
+// The size of the scrollback buffer will be set to the larger of this value
+// and the number of visible rows the widget can display, so 0 can safely be
+// used to disable scrollback.
+//
+// Note that this setting only affects the normal screen buffer. For terminal
+// types which have an alternate screen buffer, no scrollback is allowed on the
+// alternate screen buffer.
+func (t *Terminal) SetScrollbackLines(size int) {
+	C.vte_terminal_set_scrollback_lines(t.ptr, C.uintToGlong(C.uint(size)))
 }
 
 // GetTextBlinkMode reports whether or not the terminal will allow blinking text.
