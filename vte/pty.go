@@ -9,6 +9,8 @@ import "C"
 import (
 	"errors"
 	"os"
+	"os/exec"
+	"time"
 	"unsafe"
 
 	"github.com/gotk3/gotk3/glib"
@@ -31,6 +33,12 @@ const (
 // Pty is a wrapper around VtePty.
 type Pty struct {
 	ptr *C.VtePty
+}
+
+// PtySize represents size of [Pty].
+type PtySize struct {
+	Rows    int
+	Columns int
 }
 
 // PtyNewSync allocates a new pseudo-terminal.
@@ -66,4 +74,118 @@ func PtyNewForeignSync(file *os.File, cancellable *glib.Cancellable) (*Pty, erro
 	}
 
 	return &Pty{pty}, nil
+}
+
+// GetFd return the file descriptor of the PTY master in pty. The file
+// descriptor belongs to pty and must not be closed or have its flags changed.
+func (pty *Pty) GetFd() uintptr {
+	return uintptr(C.vte_pty_get_fd(pty.ptr))
+}
+
+// GetSize returns size of the pseudo terminal.
+func (pty *Pty) GetSize() (*PtySize, error) {
+	var (
+		gerr    *C.GError
+		rows    C.int
+		columns C.int
+	)
+
+	success := C.vte_pty_get_size(pty.ptr, &rows, &columns, &gerr)
+
+	if !goBool(success) {
+		defer C.g_error_free(gerr)
+		return nil, errors.New(goString(gerr.message))
+	}
+
+	return &PtySize{
+		Rows:    int(rows),
+		Columns: int(columns),
+	}, nil
+}
+
+// SetSize attempts to resize the pseudo terminal's window size. If successful,
+// the OS kernel will send SIGWINCH to the child process group.
+func (pty *Pty) SetSize(size *PtySize) error {
+	var (
+		gerr    *C.GError
+		rows    = C.int(size.Rows)
+		columns = C.int(size.Columns)
+	)
+
+	success := C.vte_pty_set_size(pty.ptr, rows, columns, &gerr)
+
+	if !goBool(success) {
+		defer C.g_error_free(gerr)
+		return errors.New(goString(gerr.message))
+	}
+
+	return nil
+}
+
+// SetUTF8 tells the kernel whether the terminal is UTF-8 or not, in case it can
+// make use of the info.
+func (pty *Pty) SetUTF8(v bool) error {
+	var (
+		gerr *C.GError
+		utf8 = gboolean(v)
+	)
+
+	success := C.vte_pty_set_utf8(pty.ptr, utf8, &gerr)
+
+	if !goBool(success) {
+		defer C.g_error_free(gerr)
+		return errors.New(goString(gerr.message))
+	}
+
+	return nil
+}
+
+// SpawnAsync starts the specified command under the pseudo-terminal pty.
+//
+// The TERM environment variable is automatically set to a default value,
+// but can be overridden from cmd.
+//
+// [SPAWN_STDOUT_TO_DEV_NULL], [SPAWN_STDERR_TO_DEV_NULL], and
+// [SPAWN_CHILD_INHERITS_STDIN] are not supported in flags, since stdin, stdout
+// and stderr of the child process will always be connected to the PTY. Also
+// [SPAWN_LEAVE_DESCRIPTORS_OPEN] is not supported; and
+// [SPAWN_DO_NOT_REAP_CHILD] will always be added to spawn_flags.
+func (pty *Pty) SpawnAsync(
+	cmd *exec.Cmd,
+	flags SpawnFlags,
+	timeout time.Duration,
+	cancellable *glib.Cancellable,
+) {
+	var (
+		workdir               = C.CString(cmd.Dir)
+		argv                  = cStringArr(cmd.Args)
+		envv                  = cStringArr(cmd.Env)
+		spawnFlags            = C.GSpawnFlags(flags)
+		childSetup            C.GSpawnChildSetupFunc
+		childSetupData        C.gpointer
+		cTimeout              = C.int(timeout.Milliseconds())
+		cCancellable          = C.toCancellable(unsafe.Pointer(cancellable.GObject))
+		childSetupDataDestroy C.GDestroyNotify
+		callback              C.GAsyncReadyCallback
+		userData              C.gpointer
+	)
+
+	defer C.free(unsafe.Pointer(workdir))
+	defer cStringArrFree(argv)
+	defer cStringArrFree(envv)
+
+	C.vte_pty_spawn_async(
+		pty.ptr,
+		workdir,
+		&argv[0],
+		&envv[0],
+		spawnFlags,
+		childSetup,
+		childSetupData,
+		childSetupDataDestroy,
+		cTimeout,
+		cCancellable,
+		callback,
+		userData,
+	)
 }
