@@ -4,6 +4,9 @@ package vte
 // #cgo pkg-config: gtk+-3.0 vte-2.91
 // #include <gtk/gtk.h>
 // #include <vte/vte.h>
+//
+// #include "exec.go.h"
+// #include "glib.go.h"
 // #include "vte.go.h"
 import "C"
 import (
@@ -90,4 +93,49 @@ func (t *Terminal) SetPty(pty *Pty) {
 	}
 
 	C.vte_terminal_set_pty(t.ptr, pty.ptr)
+}
+
+// SpawnAsync is a convenience function that wraps creating the [Pty] and
+// spawning the child process on it. See [Pty.SpawnAsync] for more information.
+func (t *Terminal) SpawnAsync(cmd *Command) {
+	var ccallID C.gpointer
+	if cmd.OnSpawn != nil {
+		callID := assignCallID(cmd)
+		ccallID = C.uintToGpointer(C.uint(callID))
+	}
+
+	var (
+		ptyFlags              = C.VtePtyFlags(cmd.PtyFlags)
+		workdir               = C.CString(cmd.Dir)
+		argv                  = cStringArr(cmd.Args)
+		envv                  = cStringArr(cmd.Env)
+		spawnFlags            = C.GSpawnFlags(cmd.SpawnFlags)
+		childSetup            C.GSpawnChildSetupFunc
+		childSetupData        C.gpointer
+		cTimeout              = C.int(cmd.Timeout.Milliseconds())
+		cCancellable          = C.toCancellable(unsafe.Pointer(cmd.Cancellable.GObject))
+		childSetupDataDestroy C.GDestroyNotify
+		callback              = C.VteTerminalSpawnAsyncCallback(C.terminalSpawnAsyncCallback)
+		userData              = ccallID
+	)
+
+	defer C.free(unsafe.Pointer(workdir))
+	defer cStringArrFree(argv)
+	defer cStringArrFree(envv)
+
+	C.vte_terminal_spawn_async(
+		t.ptr,
+		ptyFlags,
+		workdir,
+		&argv[0],
+		&envv[0],
+		spawnFlags,
+		childSetup,
+		childSetupData,
+		childSetupDataDestroy,
+		cTimeout,
+		cCancellable,
+		callback,
+		userData,
+	)
 }
