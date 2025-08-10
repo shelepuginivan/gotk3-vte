@@ -371,7 +371,11 @@ func (t *Terminal) SetEnableSixel(v bool) {
 // The actual font takes the font scale into account, this is not reflected in
 // the return value, the unscaled font is returned.
 func (t *Terminal) GetFont() *pango.FontDescription {
-	return wrapPangoFontDescription(C.vte_terminal_get_font(t.ptr))
+	desc := C.vte_terminal_get_font(t.ptr)
+	if desc == nil {
+		return nil
+	}
+	return wrapPangoFontDescription(desc)
 }
 
 // SetFont sets the font used for rendering all text displayed by the terminal.
@@ -379,7 +383,11 @@ func (t *Terminal) GetFont() *pango.FontDescription {
 // metrics, and attempt to resize itself to keep the same number of rows and
 // columns. The font scale is applied to the specified font.
 func (t *Terminal) SetFont(desc *pango.FontDescription) {
-	C.vte_terminal_set_font(t.ptr, unwrapPangoFontDescription(desc))
+	var d *C.PangoFontDescription
+	if desc != nil {
+		d = unwrapPangoFontDescription(desc)
+	}
+	C.vte_terminal_set_font(t.ptr, d)
 }
 
 // SetFontFromString is a convenience method that sets font used for rendering
@@ -442,13 +450,21 @@ func (t *Terminal) SetFontFromString(s string) {
 
 // GetFontOptions returns terminal's font options.
 func (t *Terminal) GetFontOptions() *cairo.FontOptions {
-	return wrapCairoFontOptions(C.vte_terminal_get_font_options(t.ptr))
+	options := C.vte_terminal_get_font_options(t.ptr)
+	if options == nil {
+		return nil
+	}
+	return wrapCairoFontOptions(options)
 }
 
 // SetFontOptions sets terminal's font options. Use nil to use the default
 // options.
 func (t *Terminal) SetFontOptions(options *cairo.FontOptions) {
-	C.vte_terminal_set_font_options(t.ptr, unwrapCairoFontOptions(options))
+	var opt *C.cairo_font_options_t
+	if options != nil {
+		opt = unwrapCairoFontOptions(options)
+	}
+	C.vte_terminal_set_font_options(t.ptr, opt)
 }
 
 // GetTextBlinkMode reports whether or not the terminal will allow blinking text.
