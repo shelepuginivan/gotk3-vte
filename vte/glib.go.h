@@ -2,6 +2,14 @@
 #include <glib.h>
 #include <glib-object.h>
 
-static GCancellable *toCancellable(void *p) { 
+static GCancellable *toCancellable(void *p) {
     return (G_CANCELLABLE(p));
+}
+
+static uint gpointerToUint(gpointer i) {
+    return (GPOINTER_TO_UINT(i));
+}
+
+static gpointer uintToGpointer(uint i) {
+    return (GUINT_TO_POINTER(i));
 }
