@@ -2,11 +2,13 @@
 package vte
 
 // #cgo pkg-config: gtk+-3.0 vte-2.91
+//
 // #include <gtk/gtk.h>
 // #include <vte/vte.h>
 //
 // #include "exec.go.h"
 // #include "glib.go.h"
+// #include "gtk.go.h"
 // #include "vte.go.h"
 import "C"
 import (
@@ -93,6 +95,280 @@ func (t *Terminal) SetPty(pty *Pty) {
 	}
 
 	C.vte_terminal_set_pty(t.ptr, pty.ptr)
+}
+
+// GetAllowHyperlink reports whether or not hyperlinks (OSC 8 escape sequence)
+// are allowed.
+func (t *Terminal) GetAllowHyperlink() bool {
+	return goBool(C.vte_terminal_get_allow_hyperlink(t.ptr))
+}
+
+// SetAllowHyperlink controls whether or not hyperlinks (OSC 8 escape sequence)
+// are allowed.
+func (t *Terminal) SetAllowHyperlink(v bool) {
+	C.vte_terminal_set_allow_hyperlink(t.ptr, gboolean(v))
+}
+
+// GetAudibleBell reports whether or not the terminal will beep when the
+// child outputs the "bl" sequence.
+func (t *Terminal) GetAudibleBell() bool {
+	return goBool(C.vte_terminal_get_audible_bell(t.ptr))
+}
+
+// SetAudibleBell controls whether or not the terminal will beep when the
+// child outputs the "bl" sequence.
+func (t *Terminal) SetAudibleBell(v bool) {
+	C.vte_terminal_set_audible_bell(t.ptr, gboolean(v))
+}
+
+// GetBackspaceBinding reports what string or control sequence the terminal
+// sends to its child when the user presses the backspace key.
+func (t *Terminal) GetBackspaceBinding() EraseBinding {
+	value, _ := t.GetProperty("backspace-binding")
+	binding, ok := value.(int)
+	if !ok {
+		return ERASE_AUTO
+	}
+	return EraseBinding(binding)
+}
+
+// SetBackspaceBinding controls what string or control sequence the terminal
+// sends to its child when the user presses the backspace key.
+func (t *Terminal) SetBackspaceBinding(binding EraseBinding) {
+	C.vte_terminal_set_backspace_binding(t.ptr, C.VteEraseBinding(binding))
+}
+
+// GetDeleteBinding reports what string or control sequence the terminal sends
+// to its child when the user presses the delete key.
+func (t *Terminal) GetDeleteBinding() EraseBinding {
+	value, _ := t.GetProperty("delete-binding")
+	binding, ok := value.(int)
+	if !ok {
+		return ERASE_AUTO
+	}
+	return EraseBinding(binding)
+}
+
+// SetDeleteBinding controls what string or control sequence the terminal sends
+// to its child when the user presses the delete key.
+func (t *Terminal) SetDeleteBinding(binding EraseBinding) {
+	C.vte_terminal_set_delete_binding(t.ptr, C.VteEraseBinding(binding))
+}
+
+// GetBoldIsBright reports whether the SGR 1 attribute also switches to the
+// bright counterpart of the first 8 palette colors, in addition to making them
+// bold (legacy behavior) or if SGR 1 only enables bold and leaves the color
+// intact.
+func (t *Terminal) GetBoldIsBright() bool {
+	return goBool(C.vte_terminal_get_bold_is_bright(t.ptr))
+}
+
+// SetBoldIsBright controls whether the SGR 1 attribute also switches to the
+// bright counterpart of the first 8 palette colors, in addition to making them
+// bold (legacy behavior) or if SGR 1 only enables bold and leaves the color
+// intact.
+func (t *Terminal) SetBoldIsBright(v bool) {
+	C.vte_terminal_set_bold_is_bright(t.ptr, gboolean(v))
+}
+
+// GetCellHeightScale returns scale factor for the cell height that increases
+// line spacing.
+func (t *Terminal) GetCellHeightScale() float64 {
+	return float64(C.vte_terminal_get_cell_height_scale(t.ptr))
+}
+
+// SetCellHeightScale controls scale factor for the cell height that increases
+// line spacing. The font's height is not affected.
+func (t *Terminal) SetCellHeightScale(scale float64) {
+	C.vte_terminal_set_cell_height_scale(t.ptr, C.gdouble(scale))
+}
+
+// GetCellWidthScale returns scale factor for the cell width that increases
+// letter spacing.
+func (t *Terminal) GetCellWidthScale() float64 {
+	return float64(C.vte_terminal_get_cell_width_scale(t.ptr))
+}
+
+// SetCellWidthScale controls scale factor for the cell width that increases
+// letter spacing. The font's width is not affected.
+func (t *Terminal) SetCellWidthScale(scale float64) {
+	C.vte_terminal_set_cell_width_scale(t.ptr, C.gdouble(scale))
+}
+
+// GetCJKAmbiguousWidth reports whether ambiguous-width characters are narrow
+// or wide.
+func (t *Terminal) GetCJKAmbiguousWidth() CJKAmbiguousWidth {
+	return CJKAmbiguousWidth(C.vte_terminal_get_cjk_ambiguous_width(t.ptr))
+}
+
+// SetCJKAmbiguousWidth controls whether ambiguous-width characters are narrow
+// or wide.
+//
+// This setting only takes effect the next time the terminal is reset, either
+// via escape sequence or with [Terminal.Reset].
+func (t *Terminal) SetCJKAmbiguousWidth(width CJKAmbiguousWidth) {
+	C.vte_terminal_set_cjk_ambiguous_width(t.ptr, C.int(width))
+}
+
+// GetContextMenu returns context menu of the terminal.
+func (t *Terminal) GetContextMenu() gtk.IWidget {
+	menu, err := t.GetProperty("context-menu")
+	if err != nil {
+		return nil
+	}
+
+	widget, ok := menu.(gtk.IWidget)
+	if !ok {
+		return nil
+	}
+
+	return widget
+}
+
+// SetContextMenu sets menu as the context menu in terminal.
+// Use nil to unset the current menu.
+func (t *Terminal) SetContextMenu(menu gtk.IWidget) {
+	var widget *C.GtkWidget
+
+	if menu != nil {
+		widget = C.toGtkWidget(unsafe.Pointer(menu.ToWidget().GObject))
+	}
+
+	C.vte_terminal_set_context_menu(t.ptr, widget)
+}
+
+// GetContextMenuModel returns context menu model of the terminal.
+func (t *Terminal) GetContextMenuModel() *glib.MenuModel {
+	menu, err := t.GetProperty("context-menu-model")
+	if err != nil {
+		return nil
+	}
+
+	widget, ok := menu.(*glib.MenuModel)
+	if !ok {
+		return nil
+	}
+
+	return widget
+}
+
+// SetContextMenuModel sets model as the context menu model in terminal.
+// Use nil to unset the current menu model.
+//
+// Takes precedence over [Terminal.SetContextMenu].
+func (t *Terminal) SetContextMenuModel(model *glib.MenuModel) {
+	var menuModel *C.GMenuModel
+
+	if model != nil {
+		menuModel = C.toMenuModel(unsafe.Pointer(model.GObject))
+	}
+
+	C.vte_terminal_set_context_menu_model(t.ptr, menuModel)
+}
+
+// GetCursorBlinkMode reports whether or not the cursor will blink.
+func (t *Terminal) GetCursorBlinkMode() CursorBlinkMode {
+	return CursorBlinkMode(C.vte_terminal_get_cursor_blink_mode(t.ptr))
+}
+
+// SetCursorBlinkMode controls whether or not the cursor will blink.
+// Using [CURSOR_BLINK_SYSTEM] will use the GtkSettings::gtk-cursor-blink
+// setting.
+func (t *Terminal) SetCursorBlinkMode(mode CursorBlinkMode) {
+	C.vte_terminal_set_cursor_blink_mode(t.ptr, C.VteCursorBlinkMode(mode))
+}
+
+// GetCursorShape returns the shape of the cursor drawn.
+func (t *Terminal) GetCursorShape() CursorShape {
+	return CursorShape(C.vte_terminal_get_cursor_shape(t.ptr))
+}
+
+// SetCursorShape sets the shape of the cursor drawn.
+func (t *Terminal) SetCursorShape(shape CursorShape) {
+	C.vte_terminal_set_cursor_shape(t.ptr, C.VteCursorShape(shape))
+}
+
+// GetEnableA11y reports whether or not a11y is enabled for the widget.
+func (t *Terminal) GetEnableA11y() bool {
+	return goBool(C.vte_terminal_get_enable_a11y(t.ptr))
+}
+
+// SetEnableA11y controls whether or not a11y is enabled for the widget.
+func (t *Terminal) SetEnableA11y(v bool) {
+	C.vte_terminal_set_enable_a11y(t.ptr, gboolean(v))
+}
+
+// GetEnableBidi reports whether or not the terminal will perform
+// bidirectional text rendering.
+func (t *Terminal) GetEnableBidi() bool {
+	return goBool(C.vte_terminal_get_enable_bidi(t.ptr))
+}
+
+// SetEnableBidi controls whether or not the terminal will perform
+// bidirectional text rendering.
+func (t *Terminal) SetEnableBidi(v bool) {
+	C.vte_terminal_set_enable_bidi(t.ptr, gboolean(v))
+}
+
+// GetEnableFallbackScrolling reports whether the terminal uses scroll events
+// to scroll the history if the event was not otherwise consumed by it.
+func (t *Terminal) GetEnableFallbackScrolling() bool {
+	return goBool(C.vte_terminal_get_enable_fallback_scrolling(t.ptr))
+}
+
+// SetEnableFallbackScrolling controls whether the terminal uses scroll events
+// to scroll the history if the event was not otherwise consumed by it.
+//
+// This function is rarely useful, except when the terminal is added to a
+// [github.com/gotk3/gotk3/gtk.ScrolledWindow], to perform kinetic scrolling
+func (t *Terminal) SetEnableFallbackScrolling(v bool) {
+	C.vte_terminal_set_enable_fallback_scrolling(t.ptr, gboolean(v))
+}
+
+// GetEnableLegacyOSC777 reports whether legacy OSC 777 sequences are
+// translated to their corresponding termprops.
+func (t *Terminal) GetEnableLegacyOSC777() bool {
+	return goBool(C.vte_terminal_get_enable_legacy_osc777(t.ptr))
+}
+
+// SetEnableLegacyOSC777 controls whether legacy OSC 777 sequences are
+// translated to their corresponding termprops.
+func (t *Terminal) SetEnableLegacyOSC777(v bool) {
+	C.vte_terminal_set_enable_legacy_osc777(t.ptr, gboolean(v))
+}
+
+// GetEnableShaping reports whether or not the terminal will shape Arabic text.
+func (t *Terminal) GetEnableShaping() bool {
+	return goBool(C.vte_terminal_get_enable_shaping(t.ptr))
+}
+
+// SetEnableShaping controls whether or not the terminal will shape Arabic text.
+func (t *Terminal) SetEnableShaping(v bool) {
+	C.vte_terminal_set_enable_shaping(t.ptr, gboolean(v))
+}
+
+// GetEnableSixel reports whether [SIXEL] image support is enabled.
+//
+// [SIXEL]: https://en.wikipedia.org/wiki/Sixel
+func (t *Terminal) GetEnableSixel() bool {
+	return goBool(C.vte_terminal_get_enable_sixel(t.ptr))
+}
+
+// SetEnableSixel controls whether [SIXEL] image support is enabled.
+//
+// [SIXEL]: https://en.wikipedia.org/wiki/Sixel
+func (t *Terminal) SetEnableSixel(v bool) {
+	C.vte_terminal_set_enable_sixel(t.ptr, gboolean(v))
+}
+
+// GetTextBlinkMode reports whether or not the terminal will allow blinking text.
+func (t *Terminal) GetTextBlinkMode() TextBlinkMode {
+	return TextBlinkMode(C.vte_terminal_get_text_blink_mode(t.ptr))
+}
+
+// SetTextBlinkMode controls whether or not the terminal will allow blinking text.
+func (t *Terminal) SetTextBlinkMode(mode TextBlinkMode) {
+	C.vte_terminal_set_text_blink_mode(t.ptr, C.VteTextBlinkMode(mode))
 }
 
 // GetXAlign returns the horizontal alignment of terminal within its allocation.
