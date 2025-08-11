@@ -14,7 +14,9 @@ package vte
 // #include "vte.go.h"
 import "C"
 import (
+	"errors"
 	"fmt"
+	"unicode/utf8"
 	"unsafe"
 
 	"github.com/gotk3/gotk3/cairo"
@@ -102,6 +104,17 @@ func (t *Terminal) FeedChild(text string) {
 	length := C.intToGssize(C.int(len(text)))
 	C.vte_terminal_feed_child(t.ptr, cstr, length)
 	C.free(unsafe.Pointer(cstr))
+}
+
+// Write is an alias for [Feed].
+//
+// Error is only returned if p is not a valid UTF-8 string.
+func (t *Terminal) Write(p []byte) (int, error) {
+	if !utf8.Valid(p) {
+		return 0, errors.New("argument must be a valid UTF-8 string")
+	}
+	t.Feed(string(p))
+	return len(p), nil
 }
 
 // GetPty returns [Pty] associated with the terminal.
