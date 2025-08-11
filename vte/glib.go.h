@@ -22,6 +22,10 @@ static glong uintToGlong(uint i) {
     return ((glong)i);
 }
 
+static gsize uintToGsize(uint i) {
+    return ((gsize)i);
+}
+
 static gssize intToGssize(int i) {
     return ((gssize)i);
 }

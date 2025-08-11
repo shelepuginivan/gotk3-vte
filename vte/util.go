@@ -1,5 +1,6 @@
 package vte
 
+// #include <gdk/gdk.h>
 // #include <gtk/gtk.h>
 // #include <pango/pango.h>
 // #include <vte/vte.h>
@@ -8,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/gotk3/gotk3/cairo"
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/pango"
 )
 
@@ -79,4 +81,11 @@ func unwrapCairoFontOptions(options *cairo.FontOptions) *C.cairo_font_options_t 
 	ptrOpNative := (**C.cairo_font_options_t)(ptrOp)
 
 	return *ptrOpNative
+}
+
+func unwrapGdkRGBA(options *gdk.RGBA) *C.GdkRGBA {
+	ptrRGBA := unsafe.Pointer(options)
+	ptrRGBANative := (**C.GdkRGBA)(ptrRGBA)
+
+	return *ptrRGBANative
 }

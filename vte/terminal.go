@@ -20,6 +20,7 @@ import (
 	"unsafe"
 
 	"github.com/gotk3/gotk3/cairo"
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/gotk3/gotk3/pango"
@@ -473,7 +474,7 @@ func (t *Terminal) SetFont(desc *pango.FontDescription) {
 // @‍axis1=value,axis2=value,...
 //
 // FEATURES is a comma-separated list of font features of the form
-// #‍feature1=value,feature2=value,... The =value part can be ommitted if
+// #‍feature1=value,feature2=value,... The =value part can be omitted if
 // the value is 1.
 //
 // Any one of the options may be absent. If FAMILY-LIST is absent, then the
@@ -733,6 +734,102 @@ func (t *Terminal) SpawnAsync(cmd *Command) {
 // (insert/delete), selection state, and encoding.
 func (t *Terminal) Reset(clearTabstops, clearHistory bool) {
 	C.vte_terminal_reset(t.ptr, gboolean(clearTabstops), gboolean(clearTabstops))
+}
+
+// SetColors sets terminal colors.
+//
+// palette must contain 0, 8, 16, 232, or 256 colors. It specifies the new
+// values for the 256 palette colors in the following order:
+//
+//   - 8 standard colors
+//   - their 8 bright counterparts
+//   - 6x6x6 color cube
+//   - 24 grayscale colors
+//
+// More information about terminal colors can be found [here].
+//
+// Special cases are:
+//
+//   - If foreground is nil and palette length is greater than 0, the new
+//     foreground color is taken from palette[7].
+//   - If background is nil and palette length is greater than 0, the new
+//     background color is taken from palette[0].
+//   - Omitted entries will default to a hardcoded value.
+//
+// [here]: https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+func (t *Terminal) SetColors(background, foreground *gdk.RGBA, palette []*gdk.RGBA) error {
+	l := len(palette)
+
+	if l != 0 && l != 8 && l != 16 && l != 232 && l != 256 {
+		return fmt.Errorf("palette must contain 0, 8, 16, 232, or 256 colors")
+	}
+
+	var (
+		bg *C.GdkRGBA
+		fg *C.GdkRGBA
+
+		p    = make([]*C.GdkRGBA, len(palette))
+		size = C.uintToGsize(C.uint(len(palette)))
+	)
+
+	if background != nil {
+		bg = unwrapGdkRGBA(background)
+	}
+
+	if foreground != nil {
+		fg = unwrapGdkRGBA(foreground)
+	}
+
+	for i, color := range palette {
+		p[i] = unwrapGdkRGBA(color)
+	}
+
+	C.vte_terminal_set_colors(t.ptr, fg, bg, p[0], size)
+	return nil
+}
+
+// SetCursorColor sets color for text which is under the cursor.
+// Use nil to unset a color. If both background and foreground are nil, text
+// under the cursor will be drawn with foreground and background colors
+// reversed.
+func (t *Terminal) SetCursorColor(background, foreground *gdk.RGBA) {
+	var (
+		bg *C.GdkRGBA
+		fg *C.GdkRGBA
+	)
+
+	if background != nil {
+		bg = unwrapGdkRGBA(background)
+	}
+
+	if foreground != nil {
+		fg = unwrapGdkRGBA(foreground)
+	}
+
+	C.vte_terminal_set_color_cursor(t.ptr, bg)
+	C.vte_terminal_set_color_cursor_foreground(t.ptr, fg)
+}
+
+// SetHighlightColor sets the color for the text which is highlighted.
+// Use nil to unset a color. If both background and foreground, highlighted
+// text (which is usually highlighted because it is selected) will be drawn
+// with foreground and background colors reversed.
+func (t *Terminal) SetHighlightColor(background, foreground *gdk.RGBA) {
+	var (
+		bg *C.GdkRGBA
+		fg *C.GdkRGBA
+	)
+
+	if background != nil {
+		bg = unwrapGdkRGBA(background)
+	}
+
+	if foreground != nil {
+		fg = unwrapGdkRGBA(foreground)
+	}
+
+	C.vte_terminal_set_color_highlight(t.ptr, bg)
+	C.vte_terminal_set_color_highlight_foreground(t.ptr, fg)
 }
 
 // SearchFindNext searches the next string matching the search regex set with
