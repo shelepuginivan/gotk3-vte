@@ -86,6 +86,24 @@ func (t *Terminal) PasteText(text string) {
 	C.free(unsafe.Pointer(s))
 }
 
+// Feed writes text to the standard output of the terminal as if it were
+// received from a child process.
+func (t *Terminal) Feed(text string) {
+	cstr := C.CString(text)
+	length := C.intToGssize(C.int(len(text)))
+	C.vte_terminal_feed(t.ptr, cstr, length)
+	C.free(unsafe.Pointer(cstr))
+}
+
+// FeedChild writes text to the standard input of the terminal as if it were
+// entered by the user at the keyboard.
+func (t *Terminal) FeedChild(text string) {
+	cstr := C.CString(text)
+	length := C.intToGssize(C.int(len(text)))
+	C.vte_terminal_feed_child(t.ptr, cstr, length)
+	C.free(unsafe.Pointer(cstr))
+}
+
 // GetPty returns [Pty] associated with the terminal.
 func (t *Terminal) GetPty() *Pty {
 	pty := C.vte_terminal_get_pty(t.ptr)
@@ -702,4 +720,16 @@ func (t *Terminal) SpawnAsync(cmd *Command) {
 // (insert/delete), selection state, and encoding.
 func (t *Terminal) Reset(clearTabstops, clearHistory bool) {
 	C.vte_terminal_reset(t.ptr, gboolean(clearTabstops), gboolean(clearTabstops))
+}
+
+// SearchFindNext searches the next string matching the search regex set with
+// [SearchSetRegex].
+func (t *Terminal) SearchFindNext() bool {
+	return goBool(C.vte_terminal_search_find_next(t.ptr))
+}
+
+// SearchFindPrev searches the previous string matching the search regex set
+// with [SearchSetRegex].
+func (t *Terminal) SearchFindPrev() bool {
+	return goBool(C.vte_terminal_search_find_previous(t.ptr))
 }

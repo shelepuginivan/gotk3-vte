@@ -21,3 +21,7 @@ static gpointer uintToGpointer(uint i) {
 static glong uintToGlong(uint i) {
     return ((glong)i);
 }
+
+static gssize intToGssize(int i) {
+    return ((gssize)i);
+}
