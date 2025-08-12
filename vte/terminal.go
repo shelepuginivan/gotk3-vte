@@ -866,3 +866,322 @@ func (t *Terminal) SearchFindNext() bool {
 func (t *Terminal) SearchFindPrev() bool {
 	return goBool(C.vte_terminal_search_find_previous(t.ptr))
 }
+
+// ConnectBell calls callback when the a child sends a bell request to the
+// terminal.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectBell(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("bell", t.signalCb(callback))
+}
+
+// ConnectAfterBell is like [Terminal.ConnectBell], but is invoked after the
+// default handler.
+func (t *Terminal) ConnectAfterBell(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("bell", t.signalCb(callback))
+}
+
+// ConnectCellSizeChanged calls callback when the cell size changes, e.g. due
+// to a change in font, font-scale or cell-width/height-scale.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectCellSizeChanged(callback func(t *Terminal, width, height uint)) glib.SignalHandle {
+	return t.Connect("char-size-changed", t.signalCbUU(callback))
+}
+
+// ConnectAfterCellSizeChanged is like [Terminal.ConnectCellSizeChanged], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterCellSizeChanged(callback func(t *Terminal, width, height uint)) glib.SignalHandle {
+	return t.ConnectAfter("char-size-changed", t.signalCbUU(callback))
+}
+
+// ConnectChildExited calls callback when the child has exited.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectChildExited(callback func(t *Terminal, status int)) glib.SignalHandle {
+	return t.Connect("child-exited", t.signalCbI(callback))
+}
+
+// ConnectAfterChildExited is like [Terminal.ConnectChildExited], but is
+// invoked after the default handler.
+func (t *Terminal) ConnectAfterChildExited(callback func(t *Terminal, status int)) glib.SignalHandle {
+	return t.ConnectAfter("child-exited", t.signalCbI(callback))
+}
+
+// ConnectCommit calls callback when the terminal receives input from the user
+// and prepares to send it to the child process..
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectCommit(callback func(t *Terminal, text string)) glib.SignalHandle {
+	return t.ConnectAfter("commit", t.signalCbS(callback))
+}
+
+// ConnectAfterCommit is like [Terminal.ConnectCommit], but is invoked after
+// the default handler.
+func (t *Terminal) ConnectAfterCommit(callback func(t *Terminal, text string)) glib.SignalHandle {
+	return t.ConnectAfter("commit", t.signalCbS(callback))
+}
+
+// ConnectContentsChanged calls callback when the visible appearance of the
+// terminal has changed.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectContentsChanged(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("contents-changed", t.signalCb(callback))
+}
+
+// ConnectAfterContentsChanged is like [Terminal.ConnectContentsChanged], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterContentsChanged(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("contents-changed", t.signalCb(callback))
+}
+
+// ConnectCopyClipboard calls callback when [Terminal.CopyClipboardFormat] is
+// called.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectCopyClipboard(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("copy-clipboard", t.signalCb(callback))
+}
+
+// ConnectAfterCopyClipboard is like [Terminal.ConnectCopyClipboard], but is
+// invoked after the default handler.
+func (t *Terminal) ConnectAfterCopyClipboard(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("copy-clipboard", t.signalCb(callback))
+}
+
+// ConnectCursorMoved calls callback when the cursor moves to a new character
+// cell.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectCursorMoved(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("cursor-moved", t.signalCb(callback))
+}
+
+// ConnectAfterCursorMoved is like [Terminal.ConnectCursorMoved], but is
+// invoked after the default handler.
+func (t *Terminal) ConnectAfterCursorMoved(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("cursor-moved", t.signalCb(callback))
+}
+
+// ConnectDecreaseFontSize calls callback when when user hits the '-' key while
+// holding the Control key.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectDecreaseFontSize(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("decrease-font-size", t.signalCb(callback))
+}
+
+// ConnectAfterDecreaseFontSize is like [Terminal.ConnectDecreaseFontSize], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterDecreaseFontSize(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("decrease-font-size", t.signalCb(callback))
+}
+
+// ConnectEOF calls callback when the terminal receives an end-of-file from a
+// child which is running in the terminal. This signal is frequently (but not
+// always) emitted with a child-exited signal.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectEOF(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("eof", t.signalCb(callback))
+}
+
+// ConnectAfterEOF is like [Terminal.ConnectEOF], but is invoked after the
+// default handler.
+func (t *Terminal) ConnectAfterEOF(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("eof", t.signalCb(callback))
+}
+
+// ConnectHyperlinkHoverURIChanged calls callback when the hovered hyperlink
+// changes.
+//
+// The signal is not re-emitted when the bounding box changes for the same
+// hyperlink.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectHyperlinkHoverURIChanged(callback func(
+	t *Terminal,
+	uri string,
+	rect gdk.Rectangle,
+)) glib.SignalHandle {
+	return t.Connect("hyperlink-hover-uri-changed", t.signalCbSRect(callback))
+}
+
+// ConnectAfterHyperlinkHoverURIChanged is like
+// [Terminal.ConnectHyperlinkHoverURIChanged], but is invoked after the default
+// handler.
+func (t *Terminal) ConnectAfterHyperlinkHoverURIChanged(callback func(
+	t *Terminal,
+	uri string,
+	rect gdk.Rectangle,
+)) glib.SignalHandle {
+	return t.ConnectAfter("hyperlink-hover-uri-changed", t.signalCbSRect(callback))
+}
+
+// ConnectIncreaseFontSize calls callback when user hits the '+' key while
+// holding the Control key.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectIncreaseFontSize(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("increase-font-size", t.signalCb(callback))
+}
+
+// ConnectAfterIncreaseFontSize is like [Terminal.ConnectIncreaseFontSize], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterIncreaseFontSize(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("increase-font-size", t.signalCb(callback))
+}
+
+// ConnectPasteClipboard calls callback when [Terminal.PasteClipboard] is called.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectPasteClipboard(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("paste-clipboard", t.signalCb(callback))
+}
+
+// ConnectAfterPasteClipboard is like [Terminal.ConnectPasteClipboard], but is
+// invoked after the default handler.
+func (t *Terminal) ConnectAfterPasteClipboard(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("paste-clipboard", t.signalCb(callback))
+}
+
+// ConnectResizeWindow calls callback when child requests a change in the
+// terminal's size.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectResizeWindow(callback func(
+	t *Terminal,
+	width,
+	height uint,
+)) glib.SignalHandle {
+	return t.Connect("resize-window", t.signalCbUU(callback))
+}
+
+// ConnectAfterResizeWindow is like [Terminal.ConnectAfterResize], but is
+// invoked after the default handler.
+func (t *Terminal) ConnectAfterResizeWindow(callback func(
+	t *Terminal,
+	width,
+	height uint,
+)) glib.SignalHandle {
+	return t.ConnectAfter("resize-window", t.signalCbUU(callback))
+}
+
+// ConnectSelectionChanged calls callback when the contents of terminal's
+// selection changes.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectSelectionChanged(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("selection-changed", t.signalCb(callback))
+}
+
+// ConnectAfterSelectionChanged is like [Terminal.ConnectSelectionChanged], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterSelectionChanged(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("selection-changed", t.signalCb(callback))
+}
+
+// ConnectSetupContextMenu calls callback when terminal shows a context menu.
+//
+// Context menu may be set with [Terminal.SetContextMenu] or
+// [Terminal.SetContextMenuModel].
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectSetupContextMenu(callback func(t *Terminal)) glib.SignalHandle {
+	return t.Connect("setup-context-menu", t.signalCb(callback))
+}
+
+// ConnectAfterSetupContextMenu is like [Terminal.ConnectSetupContextMenu], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterSetupContextMenu(callback func(t *Terminal)) glib.SignalHandle {
+	return t.ConnectAfter("setup-context-menu", t.signalCb(callback))
+}
+
+// ConnectTermPropChanged calls callback when a termprop has changed or been
+// reset.
+//
+// The handler may use [Terminal.GetTermProp] to retrieve the value of any
+// termprop (not just prop) It must not call any other API on terminal,
+// including API of its parent classes.
+//
+// See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
+// signal handling.
+func (t *Terminal) ConnectTermPropChanged(callback func(t *Terminal, prop TermProp)) glib.SignalHandle {
+	return t.Connect("termprop-changed", t.signalCbProp(callback))
+}
+
+// ConnectAfterTermPropChanged is like [Terminal.ConnectTermPropChanged], but
+// is invoked after the default handler.
+func (t *Terminal) ConnectAfterTermPropChanged(callback func(t *Terminal, prop TermProp)) glib.SignalHandle {
+	return t.ConnectAfter("termprop-changed", t.signalCbProp(callback))
+}
+
+func (t *Terminal) signalCb(cb func(*Terminal)) any {
+	return func(o *glib.Object, s string) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term)
+		}
+	}
+}
+
+func (t *Terminal) signalCbI(cb func(*Terminal, int)) any {
+	return func(o *glib.Object, i int) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term, i)
+		}
+	}
+}
+
+func (t *Terminal) signalCbS(cb func(*Terminal, string)) any {
+	return func(o *glib.Object, s string) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term, s)
+		}
+	}
+}
+
+func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
+	return func(o *glib.Object, s string) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term, TermProp(s))
+		}
+	}
+}
+
+func (t *Terminal) signalCbSRect(cb func(*Terminal, string, gdk.Rectangle)) any {
+	return func(o *glib.Object, s string, r gdk.Rectangle) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term, s, r)
+		}
+	}
+}
+
+func (t *Terminal) signalCbUU(cb func(*Terminal, uint, uint)) any {
+	return func(o *glib.Object, w, h uint) {
+		term, err := terminalFromGObject(o)
+		if err == nil {
+			cb(term, w, h)
+		}
+	}
+}
