@@ -1091,7 +1091,7 @@ func (t *Terminal) ConnectResizeWindow(callback func(
 	return t.Connect("resize-window", t.signalCbUU(callback))
 }
 
-// ConnectAfterResizeWindow is like [Terminal.ConnectAfterResize], but is
+// ConnectAfterResizeWindow is like [Terminal.ConnectResizeWindow], but is
 // invoked after the default handler.
 func (t *Terminal) ConnectAfterResizeWindow(callback func(
 	t *Terminal,

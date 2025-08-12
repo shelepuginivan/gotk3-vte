@@ -46,7 +46,7 @@ func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
 }
 
 // PtyNewForeignSync creates a new [Pty] for the PTY master file. Newly created
-// [PTY] will take ownership of PTY file descriptor and close it on finalize.
+// [Pty] will take ownership of PTY file descriptor and close it on finalize.
 func PtyNewForeignSync(ptmx *os.File, cancellable *glib.Cancellable) (*Pty, error) {
 	var (
 		gerr *C.GError
