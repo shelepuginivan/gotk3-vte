@@ -60,6 +60,30 @@ func TerminalNew() (*Terminal, error) {
 	}, nil
 }
 
+// terminalFromGObject converts object to [Terminal]. If assertion
+// VTE_IS_TERMINAL fails on the underlying GObject, error is returned.
+func terminalFromGObject(object *glib.Object) (*Terminal, error) {
+	cGObject := object.GObject
+
+	if !goBool(C.isTerminal(unsafe.Pointer(cGObject))) {
+		return nil, fmt.Errorf("object is not a Terminal")
+	}
+
+	initiallyUnowned := glib.InitiallyUnowned{
+		Object: object,
+	}
+
+	widget := gtk.Widget{
+		InitiallyUnowned: initiallyUnowned,
+	}
+
+	return &Terminal{
+		Widget: widget,
+
+		ptr: C.toTerminal(unsafe.Pointer(cGObject)),
+	}, nil
+}
+
 // CopyClipboardFormat copies selected text to clipboard in the specified
 // format.
 func (t *Terminal) CopyClipboardFormat(format Format) {
