@@ -141,6 +141,26 @@ func (t *Terminal) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+// GetTermProp returns termprop by name. It should be called inside the
+// callback of [Terminal.ConnectTermPropChanged] or
+// [Terminal.ConnectAfterTermPropChanged].
+func (t *Terminal) GetTermProp(prop TermProp) (any, error) {
+	v, err := glib.ValueAlloc()
+	if err != nil {
+		return nil, err
+	}
+
+	gvalue := C.toGValue(unsafe.Pointer(v.GValue))
+	cprop := C.CString(string(prop))
+	defer C.free(unsafe.Pointer(cprop))
+
+	if !goBool(C.vte_terminal_get_termprop_value(t.ptr, cprop, gvalue)) {
+		return nil, errFailed("vte_terminal_get_termprop_value")
+	}
+
+	return v.GoValue()
+}
+
 // GetPty returns [Pty] associated with the terminal.
 func (t *Terminal) GetPty() *Pty {
 	pty := C.vte_terminal_get_pty(t.ptr)

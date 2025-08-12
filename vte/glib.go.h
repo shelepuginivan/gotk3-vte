@@ -10,6 +10,10 @@ static GMenuModel *toMenuModel(void *p) {
     return (G_MENU_MODEL(p));
 }
 
+static GValue *toGValue(void *p) {
+    return ((GValue*)p);
+}
+
 static uint gpointerToUint(gpointer i) {
     return (GPOINTER_TO_UINT(i));
 }
