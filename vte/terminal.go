@@ -1,4 +1,3 @@
-// Package vte provides Go bindings for Vte.
 package vte
 
 // #cgo pkg-config: gtk+-3.0 vte-2.91
