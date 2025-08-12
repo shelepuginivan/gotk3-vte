@@ -683,9 +683,9 @@ func (t *Terminal) SetYFill(v bool) {
 	C.vte_terminal_set_yfill(t.ptr, gboolean(v))
 }
 
-// SpawnAsync is a convenience function that wraps creating the [Pty] and
-// spawning the child process on it. See [Pty.SpawnAsync] for more information.
-func (t *Terminal) SpawnAsync(cmd *Command) {
+// Spawn is a convenience function that wraps creating the [Pty] and
+// spawning the child process on it. See [Pty.Spawn] for more information.
+func (t *Terminal) Spawn(cmd *Command) {
 	var ccallID C.gpointer
 	if cmd.OnSpawn != nil {
 		callID := assignCallID(cmd)

@@ -143,7 +143,11 @@ func (pty *Pty) SetUTF8(v bool) error {
 	return nil
 }
 
-// SpawnAsync starts the specified command under the pseudo-terminal pty.
+// Spawn starts the specified command under the pseudo-terminal pty.
+//
+// The command is spawned asynchronously. When cmd is executed or execution
+// fails, its field Callback is called (if it is not nil) with the
+// corresponding PID and occurred error.
 //
 // The TERM environment variable is automatically set to a default value,
 // but can be overridden from cmd.
@@ -153,7 +157,7 @@ func (pty *Pty) SetUTF8(v bool) error {
 // and stderr of the child process will always be connected to the PTY. Also
 // [SPAWN_LEAVE_DESCRIPTORS_OPEN] is not supported; and
 // [SPAWN_DO_NOT_REAP_CHILD] will always be added to spawn_flags.
-func (pty *Pty) SpawnAsync(cmd *Command) {
+func (pty *Pty) Spawn(cmd *Command) {
 	var ccallID C.gpointer
 	if cmd.OnSpawn != nil {
 		callID := assignCallID(cmd)
