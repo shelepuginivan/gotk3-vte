@@ -37,7 +37,7 @@ type Terminal struct {
 func TerminalNew() (*Terminal, error) {
 	ptr := C.vte_terminal_new()
 	if ptr == nil {
-		return nil, fmt.Errorf("vte_terminal_new returned nil pointer")
+		return nil, errNilPointer("vte_terminal_new")
 	}
 
 	cGObject := glib.ToGObject(unsafe.Pointer(ptr))
