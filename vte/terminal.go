@@ -1033,7 +1033,7 @@ func (t *Terminal) ConnectAfterEOF(callback func(t *Terminal)) glib.SignalHandle
 func (t *Terminal) ConnectHyperlinkHoverURIChanged(callback func(
 	t *Terminal,
 	uri string,
-	rect gdk.Rectangle,
+	rect *gdk.Rectangle,
 )) glib.SignalHandle {
 	return t.Connect("hyperlink-hover-uri-changed", t.signalCbSRect(callback))
 }
@@ -1044,7 +1044,7 @@ func (t *Terminal) ConnectHyperlinkHoverURIChanged(callback func(
 func (t *Terminal) ConnectAfterHyperlinkHoverURIChanged(callback func(
 	t *Terminal,
 	uri string,
-	rect gdk.Rectangle,
+	rect *gdk.Rectangle,
 )) glib.SignalHandle {
 	return t.ConnectAfter("hyperlink-hover-uri-changed", t.signalCbSRect(callback))
 }
@@ -1188,11 +1188,11 @@ func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
 	}
 }
 
-func (t *Terminal) signalCbSRect(cb func(*Terminal, string, gdk.Rectangle)) any {
-	return func(o *glib.Object, s string, r gdk.Rectangle) {
+func (t *Terminal) signalCbSRect(cb func(*Terminal, string, *gdk.Rectangle)) any {
+	return func(o *glib.Object, s string, r uintptr) {
 		term, err := terminalFromGObject(o)
 		if err == nil {
-			cb(term, s, r)
+			cb(term, s, gdk.WrapRectangle(r))
 		}
 	}
 }
