@@ -40,7 +40,9 @@ type Command struct {
 	OnSpawn func(pid int, err error)
 }
 
-// WithEnv adds variable to the command environment.
+// WithEnv appends variable to the command environment.
+//
+// Can be used multiple times.
 func WithEnv(name string, value any) CommandOption {
 	return func(c *Command) {
 		c.Env = append(c.Env, fmt.Sprintf("%s=%v", name, value))
@@ -54,17 +56,21 @@ func WithWorkdir(workdir string) CommandOption {
 	}
 }
 
-// WithSpawnFlags sets command spawn flags.
+// WithSpawnFlags appends command spawn flags.
+//
+// Can be used multiple times.
 func WithSpawnFlags(flags SpawnFlags) CommandOption {
 	return func(c *Command) {
-		c.SpawnFlags = flags
+		c.SpawnFlags |= flags
 	}
 }
 
-// WithPtyFlags sets command PTY flags.
+// WithPtyFlags appends command PTY flags.
+//
+// Can be used multiple times.
 func WithPtyFlags(flags PtyFlags) CommandOption {
 	return func(c *Command) {
-		c.PtyFlags = flags
+		c.PtyFlags |= flags
 	}
 }
 
@@ -82,6 +88,7 @@ func WithCancellable(cancellable *glib.Cancellable) CommandOption {
 	}
 }
 
+// WithOnSpawn sets callback that runs when command starts or fails to start.
 func WithOnSpawn(callback func(pid int, err error)) CommandOption {
 	return func(c *Command) {
 		c.OnSpawn = callback
