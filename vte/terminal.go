@@ -25,6 +25,9 @@ import (
 	"github.com/gotk3/gotk3/pango"
 )
 
+// MatchHandle represents a tag associated with the [Regex].
+type MatchHandle int
+
 // Terminal is a wrapper around VteTerminal.
 type Terminal struct {
 	gtk.Widget
@@ -873,6 +876,69 @@ func (t *Terminal) SetHighlightColor(background, foreground *gdk.RGBA) {
 
 	C.vte_terminal_set_color_highlight(t.ptr, bg)
 	C.vte_terminal_set_color_highlight_foreground(t.ptr, fg)
+}
+
+// MatchAddRegex adds the regular expression regex to the list of matching
+// expressions. When the user moves the mouse cursor over a section of
+// displayed text which matches this expression, the text will be highlighted.
+//
+// The primary use case for this is handling clicks on URLs or other types of
+// links. See [Terminal.MatchCheckEvent] for more information.
+func (t *Terminal) MatchAddRegex(regex *Regex, flags RegexMatchFlags) (MatchHandle, error) {
+	if regex == nil {
+		return -1, fmt.Errorf("regex must not be nil")
+	}
+	return MatchHandle(C.vte_terminal_match_add_regex(t.ptr, regex.ptr, C.uint(flags))), nil
+}
+
+// MatchRemove removes the regular expression which is associated with handle
+// from the list of expressions which the terminal will highlight when the user
+// moves the mouse cursor over matching text.
+func (t *Terminal) MatchRemove(handle MatchHandle) {
+	C.vte_terminal_match_remove(t.ptr, C.int(handle))
+}
+
+// MatchRemoveAll clears the list of regular expressions the terminal uses to
+// highlight text when the user moves the mouse cursor.
+func (t *Terminal) MatchRemoveAll() {
+	C.vte_terminal_match_remove_all(t.ptr)
+}
+
+// MatchSetCursorName sets which cursor the terminal will use if the pointer is
+// over the pattern specified by tag.
+func (t *Terminal) MatchSetCursorName(handle MatchHandle, cursor string) {
+	cstr := C.CString(cursor)
+	C.vte_terminal_match_set_cursor_name(t.ptr, C.int(handle), cstr)
+	C.free(unsafe.Pointer(cstr))
+}
+
+// MatchCheckEvent checks if the text in and around the position of the event
+// matches any of the regular expressions previously set using
+// [Terminal.MatchAddRegex]. If a match exists, the text string and handle is
+// returned, otherwise MatchCheckEvent returns an error.
+//
+// Typically, event should be received from the "button-press-event" signal.
+// MatchCheckEvent allows to determine whether one of the matching strings were
+// clicked. A callback may be provided depending on the returned [MatchHandle],
+// e.g. if user clicked on a URL, open it in a web browser.
+//
+// If more than one regular expression has been set with
+// [Terminal.MatchAddRegex], then expressions are checked in the order in which
+// they were added.
+func (t *Terminal) MatchCheckEvent(event *gdk.Event) (string, MatchHandle, error) {
+	handle := C.int(0)
+	cstr := C.vte_terminal_match_check_event(t.ptr, (*C.GdkEvent)(event.GdkEvent), &handle)
+	if cstr == nil {
+		return "", -1, fmt.Errorf("no matches found")
+	}
+	defer func() {
+		// NOTE: apparently cstr is freed, even though the caller takes ownership of
+		// the returned string according to the documentation.
+		if unsafe.Pointer(cstr) != C.NULL {
+			C.free(unsafe.Pointer(cstr))
+		}
+	}()
+	return goString(cstr), MatchHandle(handle), nil
 }
 
 // SearchFindNext searches the next string matching the search regex set with
