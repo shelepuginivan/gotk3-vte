@@ -887,6 +887,31 @@ func (t *Terminal) SearchFindPrev() bool {
 	return goBool(C.vte_terminal_search_find_previous(t.ptr))
 }
 
+// SearchGetRegex returns [Regex] used for search, or nil if it is unset.
+func (t *Terminal) SearchGetRegex() *Regex {
+	ptr := C.vte_terminal_search_get_regex(t.ptr)
+	if ptr == nil {
+		return nil
+	}
+	return &Regex{ptr: ptr}
+}
+
+// SearchSetRegex sets [Regex] for search. Use nil to reset regex.
+func (t *Terminal) SearchSetRegex(regex *Regex, flags RegexMatchFlags) {
+	var r *C.VteRegex
+	if regex != nil {
+		r = regex.ptr
+	}
+	C.vte_terminal_search_set_regex(t.ptr, r, C.uint(flags))
+}
+
+// SearchSetWrapAround controls whether [Terminal.SearchFindNext] and
+// [Terminal.SearchFindPrev] wrap around to the beginning/end of the terminal
+// when reaching its end/beginning.
+func (t *Terminal) SearchSetWrapAround(v bool) {
+	C.vte_terminal_search_set_wrap_around(t.ptr, gboolean(v))
+}
+
 // ConnectBell calls callback when the a child sends a bell request to the
 // terminal.
 //
