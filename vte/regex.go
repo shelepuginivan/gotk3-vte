@@ -51,6 +51,10 @@ func RegexNew(pattern string, options ...RegexOption) (*Regex, error) {
 	r := &Regex{
 		pattern: pattern,
 		purpose: REGEX_PURPOSE_SEARCH,
+
+		// NOTE: both vte_terminal_match_add_regex and vter_terminal_search_add_regex
+		// require this flag
+		flags: REGEX_COMPILE_FLAGS_MULTILINE,
 	}
 
 	for _, option := range options {
