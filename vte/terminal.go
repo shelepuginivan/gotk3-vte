@@ -33,7 +33,23 @@ type Terminal struct {
 	gtk.Widget
 }
 
-func wrapTerminal(obj *glib.Object) *Terminal {
+// WrapTerminal wraps [github.com/gotk3/gotk3/glib.Object] and casts it into
+// [Terminal].
+//
+// This function is intended to be used in callbacks when calling
+// [github.com/gotk3/gotk3/glib.Object.Connect] directly on [Terminal]:
+//
+//	term, err := vte.TerminalNew()
+//	if err != nil {
+//	  	 log.Fatal(err)
+//	}
+//
+//	term.Connect("button-press-event", func(obj *glib.Object, ev *gdk.Event) {
+//	    term := vte.WrapTerminal(obj)
+//
+//	    // rest of the handler logic...
+//	})
+func WrapTerminal(obj *glib.Object) *Terminal {
 	if obj == nil {
 		return nil
 	}
@@ -60,7 +76,7 @@ func TerminalNew() (*Terminal, error) {
 	if ptr == nil {
 		return nil, errNilPointer("vte_terminal_new")
 	}
-	return wrapTerminal(glib.Take(unsafe.Pointer(ptr))), nil
+	return WrapTerminal(glib.Take(unsafe.Pointer(ptr))), nil
 }
 
 // CopyClipboardFormat copies selected text to clipboard in the specified
@@ -1221,7 +1237,7 @@ func (t *Terminal) ConnectAfterTermPropChanged(callback func(t *Terminal, prop T
 
 func (t *Terminal) signalCb(cb func(*Terminal)) any {
 	return func(o *glib.Object, s string) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term)
 		}
@@ -1230,7 +1246,7 @@ func (t *Terminal) signalCb(cb func(*Terminal)) any {
 
 func (t *Terminal) signalCbI(cb func(*Terminal, int)) any {
 	return func(o *glib.Object, i int) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term, i)
 		}
@@ -1239,7 +1255,7 @@ func (t *Terminal) signalCbI(cb func(*Terminal, int)) any {
 
 func (t *Terminal) signalCbS(cb func(*Terminal, string)) any {
 	return func(o *glib.Object, s string) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term, s)
 		}
@@ -1248,7 +1264,7 @@ func (t *Terminal) signalCbS(cb func(*Terminal, string)) any {
 
 func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
 	return func(o *glib.Object, s string) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term, TermProp(s))
 		}
@@ -1257,7 +1273,7 @@ func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
 
 func (t *Terminal) signalCbSRect(cb func(*Terminal, string, *gdk.Rectangle)) any {
 	return func(o *glib.Object, s string, r uintptr) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term, s, gdk.WrapRectangle(r))
 		}
@@ -1266,7 +1282,7 @@ func (t *Terminal) signalCbSRect(cb func(*Terminal, string, *gdk.Rectangle)) any
 
 func (t *Terminal) signalCbUU(cb func(*Terminal, uint, uint)) any {
 	return func(o *glib.Object, w, h uint) {
-		term := wrapTerminal(o)
+		term := WrapTerminal(o)
 		if term != nil {
 			cb(term, w, h)
 		}
