@@ -766,6 +766,16 @@ func (t *Terminal) Spawn(cmd *Command) {
 	)
 }
 
+// WatchChild watches pid. When the process exists, the "child-exited" signal
+// will be called with the child's exit status.
+//
+// This method is only required if [Pty] was set with [Terminal.SetPty], and
+// the child process was spawned with [Pty.Spawn]. If [Terminal.Spawn] is used,
+// this is handled automatically.
+func (t *Terminal) WatchChild(pid int) {
+	C.vte_terminal_watch_child(t.native(), C.GPid(pid))
+}
+
 // Reset resets as much of the terminal's internal state as possible,
 // discarding any unprocessed input data, resetting character attributes,
 // cursor state, national character set state, status line, terminal modes
