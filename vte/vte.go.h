@@ -7,3 +7,7 @@ static VteTerminal *toTerminal(void *p) {
 static gboolean isTerminal(void *p) {
     return (VTE_IS_TERMINAL(p));
 }
+
+static VtePty *toPty(void *p) {
+    return (VTE_PTY(p));
+}

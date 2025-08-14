@@ -5,6 +5,7 @@ package vte
 // #include <vte/vte.h>
 // #include "exec.go.h"
 // #include "glib.go.h"
+// #include "vte.go.h"
 import "C"
 import (
 	"os"
@@ -13,15 +14,29 @@ import (
 	"github.com/gotk3/gotk3/glib"
 )
 
-// Pty is a wrapper around VtePty.
-type Pty struct {
-	ptr *C.VtePty
-}
-
 // PtySize represents size of [Pty].
 type PtySize struct {
 	Rows    int
 	Columns int
+}
+
+// Pty is a wrapper around VtePty.
+type Pty struct {
+	*glib.Object
+}
+
+func wrapPty(obj *glib.Object) *Pty {
+	if obj == nil {
+		return nil
+	}
+	return &Pty{obj}
+}
+
+func (pty *Pty) native() *C.VtePty {
+	if pty == nil || pty.GObject == nil {
+		return nil
+	}
+	return C.toPty(unsafe.Pointer(pty.GObject))
 }
 
 // PtyNewSync allocates a new pseudo-terminal.
@@ -42,7 +57,7 @@ func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
 		return nil, errFromGError("vte_pty_new_sync", gerr)
 	}
 
-	return &Pty{pty}, nil
+	return wrapPty(glib.Take(unsafe.Pointer(pty))), nil
 }
 
 // PtyNewForeignSync creates a new [Pty] for the PTY master file. Newly created
@@ -64,13 +79,13 @@ func PtyNewForeignSync(ptmx *os.File, cancellable *glib.Cancellable) (*Pty, erro
 		return nil, errFromGError("vte_pty_new_foreign_sync", gerr)
 	}
 
-	return &Pty{pty}, nil
+	return wrapPty(glib.Take(unsafe.Pointer(pty))), nil
 }
 
 // GetFd return the file descriptor of the PTY master in pty. The file
 // descriptor belongs to pty and must not be closed or have its flags changed.
 func (pty *Pty) GetFd() uintptr {
-	return uintptr(C.vte_pty_get_fd(pty.ptr))
+	return uintptr(C.vte_pty_get_fd(pty.native()))
 }
 
 // GetSize returns size of the pseudo terminal.
@@ -81,7 +96,7 @@ func (pty *Pty) GetSize() (*PtySize, error) {
 		columns C.int
 	)
 
-	success := C.vte_pty_get_size(pty.ptr, &rows, &columns, &gerr)
+	success := C.vte_pty_get_size(pty.native(), &rows, &columns, &gerr)
 
 	if !goBool(success) {
 		if gerr == nil {
@@ -107,7 +122,7 @@ func (pty *Pty) SetSize(size *PtySize) error {
 		columns = C.int(size.Columns)
 	)
 
-	success := C.vte_pty_set_size(pty.ptr, rows, columns, &gerr)
+	success := C.vte_pty_set_size(pty.native(), rows, columns, &gerr)
 
 	if !goBool(success) {
 		if gerr == nil {
@@ -129,7 +144,7 @@ func (pty *Pty) SetUTF8(v bool) error {
 		utf8 = gboolean(v)
 	)
 
-	success := C.vte_pty_set_utf8(pty.ptr, utf8, &gerr)
+	success := C.vte_pty_set_utf8(pty.native(), utf8, &gerr)
 
 	if !goBool(success) {
 		if gerr == nil {
@@ -183,7 +198,7 @@ func (pty *Pty) Spawn(cmd *Command) {
 	defer cStringArrFree(envv)
 
 	C.vte_pty_spawn_async(
-		pty.ptr,
+		pty.native(),
 		workdir,
 		&argv[0],
 		&envv[0],
@@ -204,7 +219,7 @@ func (pty *Pty) spawnFinish(res *C.GAsyncResult) (int, error) {
 		pid  C.GPid
 	)
 
-	success := C.vte_pty_spawn_finish(pty.ptr, res, &pid, &gerr)
+	success := C.vte_pty_spawn_finish(pty.native(), res, &pid, &gerr)
 
 	if !goBool(success) {
 		if gerr == nil {

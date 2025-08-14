@@ -7,6 +7,9 @@ package vte
 import "C"
 import (
 	"sync"
+	"unsafe"
+
+	"github.com/gotk3/gotk3/glib"
 )
 
 var (
@@ -50,7 +53,7 @@ func ptySpawnAsyncCallback(source *C.VtePty, res *C.GAsyncResult, cCallID C.gpoi
 	vteAsyncExecLock.Unlock()
 
 	if cmd.OnSpawn != nil {
-		pty := &Pty{source}
+		pty := wrapPty(glib.Take(unsafe.Pointer(source)))
 		cmd.OnSpawn(pty.spawnFinish(res))
 	}
 }

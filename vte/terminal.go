@@ -167,7 +167,7 @@ func (t *Terminal) GetTermProp(prop TermProp) (any, error) {
 // GetPty returns [Pty] associated with the terminal.
 func (t *Terminal) GetPty() *Pty {
 	pty := C.vte_terminal_get_pty(t.ptr)
-	return &Pty{pty}
+	return wrapPty(pty)
 }
 
 // SetPty sets [Pty] to use in terminal. Use nil to unset the pty.
