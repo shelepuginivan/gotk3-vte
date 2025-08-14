@@ -31,8 +31,27 @@ type MatchHandle int
 // Terminal is a wrapper around VteTerminal.
 type Terminal struct {
 	gtk.Widget
+}
 
-	ptr *C.VteTerminal
+func wrapTerminal(obj *glib.Object) *Terminal {
+	if obj == nil {
+		return nil
+	}
+
+	return &Terminal{
+		Widget: gtk.Widget{
+			InitiallyUnowned: glib.InitiallyUnowned{
+				Object: obj,
+			},
+		},
+	}
+}
+
+func (t *Terminal) native() *C.VteTerminal {
+	if t == nil || t.GObject == nil {
+		return nil
+	}
+	return C.toTerminal(unsafe.Pointer(t.GObject))
 }
 
 // TerminalNew creates a new instance of [*Terminal].
@@ -41,77 +60,34 @@ func TerminalNew() (*Terminal, error) {
 	if ptr == nil {
 		return nil, errNilPointer("vte_terminal_new")
 	}
-
-	cGObject := glib.ToGObject(unsafe.Pointer(ptr))
-
-	gObject := glib.Object{
-		GObject: cGObject,
-	}
-
-	initiallyUnowned := glib.InitiallyUnowned{
-		Object: &gObject,
-	}
-
-	widget := gtk.Widget{
-		InitiallyUnowned: initiallyUnowned,
-	}
-
-	return &Terminal{
-		Widget: widget,
-
-		ptr: C.toTerminal(unsafe.Pointer(ptr)),
-	}, nil
-}
-
-// terminalFromGObject converts object to [Terminal]. If assertion
-// VTE_IS_TERMINAL fails on the underlying GObject, error is returned.
-func terminalFromGObject(object *glib.Object) (*Terminal, error) {
-	cGObject := object.GObject
-
-	if !goBool(C.isTerminal(unsafe.Pointer(cGObject))) {
-		return nil, fmt.Errorf("object is not a Terminal")
-	}
-
-	initiallyUnowned := glib.InitiallyUnowned{
-		Object: object,
-	}
-
-	widget := gtk.Widget{
-		InitiallyUnowned: initiallyUnowned,
-	}
-
-	return &Terminal{
-		Widget: widget,
-
-		ptr: C.toTerminal(unsafe.Pointer(cGObject)),
-	}, nil
+	return wrapTerminal(glib.Take(unsafe.Pointer(ptr))), nil
 }
 
 // CopyClipboardFormat copies selected text to clipboard in the specified
 // format.
 func (t *Terminal) CopyClipboardFormat(format Format) {
-	C.vte_terminal_copy_clipboard_format(t.ptr, C.VteFormat(format))
+	C.vte_terminal_copy_clipboard_format(t.native(), C.VteFormat(format))
 }
 
 // CopyPrimary copies selected text in the primary selection.
 func (t *Terminal) CopyPrimary() {
-	C.vte_terminal_copy_primary(t.ptr)
+	C.vte_terminal_copy_primary(t.native())
 }
 
 // PasteClipboard pastes contents of clipboard to the terminal.
 func (t *Terminal) PasteClipboard() {
-	C.vte_terminal_paste_clipboard(t.ptr)
+	C.vte_terminal_paste_clipboard(t.native())
 }
 
 // PastePrimary pastes contents of the primary selection to the terminal.
 func (t *Terminal) PastePrimary() {
-	C.vte_terminal_paste_primary(t.ptr)
+	C.vte_terminal_paste_primary(t.native())
 }
 
 // PasteText pastes text to the terminal.
 func (t *Terminal) PasteText(text string) {
 	s := C.CString(text)
-	C.vte_terminal_paste_text(t.ptr, s)
+	C.vte_terminal_paste_text(t.native(), s)
 	C.free(unsafe.Pointer(s))
 }
 
@@ -120,7 +96,7 @@ func (t *Terminal) PasteText(text string) {
 func (t *Terminal) Feed(text string) {
 	cstr := C.CString(text)
 	length := C.intToGssize(C.int(len(text)))
-	C.vte_terminal_feed(t.ptr, cstr, length)
+	C.vte_terminal_feed(t.native(), cstr, length)
 	C.free(unsafe.Pointer(cstr))
 }
 
@@ -129,7 +105,7 @@ func (t *Terminal) Feed(text string) {
 func (t *Terminal) FeedChild(text string) {
 	cstr := C.CString(text)
 	length := C.intToGssize(C.int(len(text)))
-	C.vte_terminal_feed_child(t.ptr, cstr, length)
+	C.vte_terminal_feed_child(t.native(), cstr, length)
 	C.free(unsafe.Pointer(cstr))
 }
 
@@ -157,7 +133,7 @@ func (t *Terminal) GetTermProp(prop TermProp) (any, error) {
 	cprop := C.CString(string(prop))
 	defer C.free(unsafe.Pointer(cprop))
 
-	if !goBool(C.vte_terminal_get_termprop_value(t.ptr, cprop, gvalue)) {
+	if !goBool(C.vte_terminal_get_termprop_value(t.native(), cprop, gvalue)) {
 		return nil, errFailed("vte_terminal_get_termprop_value")
 	}
 
@@ -166,8 +142,8 @@ func (t *Terminal) GetTermProp(prop TermProp) (any, error) {
 
 // GetPty returns [Pty] associated with the terminal.
 func (t *Terminal) GetPty() *Pty {
-	pty := C.vte_terminal_get_pty(t.ptr)
-	return wrapPty(pty)
+	pty := C.vte_terminal_get_pty(t.native())
+	return wrapPty(glib.Take(unsafe.Pointer(pty)))
 }
 
 // SetPty sets [Pty] to use in terminal. Use nil to unset the pty.
@@ -176,19 +152,19 @@ func (t *Terminal) SetPty(pty *Pty) {
 		pty = &Pty{}
 	}
 
-	C.vte_terminal_set_pty(t.ptr, pty.ptr)
+	C.vte_terminal_set_pty(t.native(), pty.native())
 }
 
 // GetAllowHyperlink reports whether or not hyperlinks (OSC 8 escape sequence)
 // are allowed.
 func (t *Terminal) GetAllowHyperlink() bool {
-	return goBool(C.vte_terminal_get_allow_hyperlink(t.ptr))
+	return goBool(C.vte_terminal_get_allow_hyperlink(t.native()))
 }
 
 // SetAllowHyperlink controls whether or not hyperlinks (OSC 8 escape sequence)
 // are allowed.
 func (t *Terminal) SetAllowHyperlink(v bool) {
-	C.vte_terminal_set_allow_hyperlink(t.ptr, gboolean(v))
+	C.vte_terminal_set_allow_hyperlink(t.native(), gboolean(v))
 }
 
 // GetHoveredURI returns the currently hovered hyperlink URI, or an empty
@@ -208,13 +184,13 @@ func (t *Terminal) GetHoveredURI() string {
 // GetAudibleBell reports whether or not the terminal will beep when the
 // child outputs the "bl" sequence.
 func (t *Terminal) GetAudibleBell() bool {
-	return goBool(C.vte_terminal_get_audible_bell(t.ptr))
+	return goBool(C.vte_terminal_get_audible_bell(t.native()))
 }
 
 // SetAudibleBell controls whether or not the terminal will beep when the
 // child outputs the "bl" sequence.
 func (t *Terminal) SetAudibleBell(v bool) {
-	C.vte_terminal_set_audible_bell(t.ptr, gboolean(v))
+	C.vte_terminal_set_audible_bell(t.native(), gboolean(v))
 }
 
 // GetBackspaceBinding reports what string or control sequence the terminal
@@ -231,7 +207,7 @@ func (t *Terminal) GetBackspaceBinding() EraseBinding {
 // SetBackspaceBinding controls what string or control sequence the terminal
 // sends to its child when the user presses the backspace key.
 func (t *Terminal) SetBackspaceBinding(binding EraseBinding) {
-	C.vte_terminal_set_backspace_binding(t.ptr, C.VteEraseBinding(binding))
+	C.vte_terminal_set_backspace_binding(t.native(), C.VteEraseBinding(binding))
 }
 
 // GetDeleteBinding reports what string or control sequence the terminal sends
@@ -248,7 +224,7 @@ func (t *Terminal) GetDeleteBinding() EraseBinding {
 // SetDeleteBinding controls what string or control sequence the terminal sends
 // to its child when the user presses the delete key.
 func (t *Terminal) SetDeleteBinding(binding EraseBinding) {
-	C.vte_terminal_set_delete_binding(t.ptr, C.VteEraseBinding(binding))
+	C.vte_terminal_set_delete_binding(t.native(), C.VteEraseBinding(binding))
 }
 
 // GetBoldIsBright reports whether the SGR 1 attribute also switches to the
@@ -256,7 +232,7 @@ func (t *Terminal) SetDeleteBinding(binding EraseBinding) {
 // bold (legacy behavior) or if SGR 1 only enables bold and leaves the color
 // intact.
 func (t *Terminal) GetBoldIsBright() bool {
-	return goBool(C.vte_terminal_get_bold_is_bright(t.ptr))
+	return goBool(C.vte_terminal_get_bold_is_bright(t.native()))
 }
 
 // SetBoldIsBright controls whether the SGR 1 attribute also switches to the
@@ -264,37 +240,37 @@ func (t *Terminal) GetBoldIsBright() bool {
 // bold (legacy behavior) or if SGR 1 only enables bold and leaves the color
 // intact.
 func (t *Terminal) SetBoldIsBright(v bool) {
-	C.vte_terminal_set_bold_is_bright(t.ptr, gboolean(v))
+	C.vte_terminal_set_bold_is_bright(t.native(), gboolean(v))
 }
 
 // GetCellHeightScale returns scale factor for the cell height that increases
 // line spacing.
 func (t *Terminal) GetCellHeightScale() float64 {
-	return float64(C.vte_terminal_get_cell_height_scale(t.ptr))
+	return float64(C.vte_terminal_get_cell_height_scale(t.native()))
 }
 
 // SetCellHeightScale controls scale factor for the cell height that increases
 // line spacing. The font's height is not affected.
 func (t *Terminal) SetCellHeightScale(scale float64) {
-	C.vte_terminal_set_cell_height_scale(t.ptr, C.gdouble(scale))
+	C.vte_terminal_set_cell_height_scale(t.native(), C.gdouble(scale))
 }
 
 // GetCellWidthScale returns scale factor for the cell width that increases
 // letter spacing.
 func (t *Terminal) GetCellWidthScale() float64 {
-	return float64(C.vte_terminal_get_cell_width_scale(t.ptr))
+	return float64(C.vte_terminal_get_cell_width_scale(t.native()))
 }
 
 // SetCellWidthScale controls scale factor for the cell width that increases
 // letter spacing. The font's width is not affected.
 func (t *Terminal) SetCellWidthScale(scale float64) {
-	C.vte_terminal_set_cell_width_scale(t.ptr, C.gdouble(scale))
+	C.vte_terminal_set_cell_width_scale(t.native(), C.gdouble(scale))
 }
 
 // GetCJKAmbiguousWidth reports whether ambiguous-width characters are narrow
 // or wide.
 func (t *Terminal) GetCJKAmbiguousWidth() CJKAmbiguousWidth {
-	return CJKAmbiguousWidth(C.vte_terminal_get_cjk_ambiguous_width(t.ptr))
+	return CJKAmbiguousWidth(C.vte_terminal_get_cjk_ambiguous_width(t.native()))
 }
 
 // SetCJKAmbiguousWidth controls whether ambiguous-width characters are narrow
@@ -303,7 +279,7 @@ func (t *Terminal) GetCJKAmbiguousWidth() CJKAmbiguousWidth {
 // This setting only takes effect the next time the terminal is reset, either
 // via escape sequence or with [Terminal.Reset].
 func (t *Terminal) SetCJKAmbiguousWidth(width CJKAmbiguousWidth) {
-	C.vte_terminal_set_cjk_ambiguous_width(t.ptr, C.int(width))
+	C.vte_terminal_set_cjk_ambiguous_width(t.native(), C.int(width))
 }
 
 // GetContextMenu returns context menu of the terminal.
@@ -330,7 +306,7 @@ func (t *Terminal) SetContextMenu(menu gtk.IWidget) {
 		widget = C.toGtkWidget(unsafe.Pointer(menu.ToWidget().GObject))
 	}
 
-	C.vte_terminal_set_context_menu(t.ptr, widget)
+	C.vte_terminal_set_context_menu(t.native(), widget)
 }
 
 // GetContextMenuModel returns context menu model of the terminal.
@@ -359,57 +335,57 @@ func (t *Terminal) SetContextMenuModel(model *glib.MenuModel) {
 		menuModel = C.toMenuModel(unsafe.Pointer(model.GObject))
 	}
 
-	C.vte_terminal_set_context_menu_model(t.ptr, menuModel)
+	C.vte_terminal_set_context_menu_model(t.native(), menuModel)
 }
 
 // GetCursorBlinkMode reports whether or not the cursor will blink.
 func (t *Terminal) GetCursorBlinkMode() CursorBlinkMode {
-	return CursorBlinkMode(C.vte_terminal_get_cursor_blink_mode(t.ptr))
+	return CursorBlinkMode(C.vte_terminal_get_cursor_blink_mode(t.native()))
 }
 
 // SetCursorBlinkMode controls whether or not the cursor will blink.
 // Using [CURSOR_BLINK_SYSTEM] will use the GtkSettings::gtk-cursor-blink
 // setting.
 func (t *Terminal) SetCursorBlinkMode(mode CursorBlinkMode) {
-	C.vte_terminal_set_cursor_blink_mode(t.ptr, C.VteCursorBlinkMode(mode))
+	C.vte_terminal_set_cursor_blink_mode(t.native(), C.VteCursorBlinkMode(mode))
 }
 
 // GetCursorShape returns the shape of the cursor drawn.
 func (t *Terminal) GetCursorShape() CursorShape {
-	return CursorShape(C.vte_terminal_get_cursor_shape(t.ptr))
+	return CursorShape(C.vte_terminal_get_cursor_shape(t.native()))
 }
 
 // SetCursorShape sets the shape of the cursor drawn.
 func (t *Terminal) SetCursorShape(shape CursorShape) {
-	C.vte_terminal_set_cursor_shape(t.ptr, C.VteCursorShape(shape))
+	C.vte_terminal_set_cursor_shape(t.native(), C.VteCursorShape(shape))
 }
 
 // GetEnableA11y reports whether or not a11y is enabled for the widget.
 func (t *Terminal) GetEnableA11y() bool {
-	return goBool(C.vte_terminal_get_enable_a11y(t.ptr))
+	return goBool(C.vte_terminal_get_enable_a11y(t.native()))
 }
 
 // SetEnableA11y controls whether or not a11y is enabled for the widget.
 func (t *Terminal) SetEnableA11y(v bool) {
-	C.vte_terminal_set_enable_a11y(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_a11y(t.native(), gboolean(v))
 }
 
 // GetEnableBidi reports whether or not the terminal will perform
 // bidirectional text rendering.
 func (t *Terminal) GetEnableBidi() bool {
-	return goBool(C.vte_terminal_get_enable_bidi(t.ptr))
+	return goBool(C.vte_terminal_get_enable_bidi(t.native()))
 }
 
 // SetEnableBidi controls whether or not the terminal will perform
 // bidirectional text rendering.
 func (t *Terminal) SetEnableBidi(v bool) {
-	C.vte_terminal_set_enable_bidi(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_bidi(t.native(), gboolean(v))
 }
 
 // GetEnableFallbackScrolling reports whether the terminal uses scroll events
 // to scroll the history if the event was not otherwise consumed by it.
 func (t *Terminal) GetEnableFallbackScrolling() bool {
-	return goBool(C.vte_terminal_get_enable_fallback_scrolling(t.ptr))
+	return goBool(C.vte_terminal_get_enable_fallback_scrolling(t.native()))
 }
 
 // SetEnableFallbackScrolling controls whether the terminal uses scroll events
@@ -418,43 +394,43 @@ func (t *Terminal) GetEnableFallbackScrolling() bool {
 // This function is rarely useful, except when the terminal is added to a
 // [github.com/gotk3/gotk3/gtk.ScrolledWindow], to perform kinetic scrolling
 func (t *Terminal) SetEnableFallbackScrolling(v bool) {
-	C.vte_terminal_set_enable_fallback_scrolling(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_fallback_scrolling(t.native(), gboolean(v))
 }
 
 // GetEnableLegacyOSC777 reports whether legacy OSC 777 sequences are
 // translated to their corresponding termprops.
 func (t *Terminal) GetEnableLegacyOSC777() bool {
-	return goBool(C.vte_terminal_get_enable_legacy_osc777(t.ptr))
+	return goBool(C.vte_terminal_get_enable_legacy_osc777(t.native()))
 }
 
 // SetEnableLegacyOSC777 controls whether legacy OSC 777 sequences are
 // translated to their corresponding termprops.
 func (t *Terminal) SetEnableLegacyOSC777(v bool) {
-	C.vte_terminal_set_enable_legacy_osc777(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_legacy_osc777(t.native(), gboolean(v))
 }
 
 // GetEnableShaping reports whether or not the terminal will shape Arabic text.
 func (t *Terminal) GetEnableShaping() bool {
-	return goBool(C.vte_terminal_get_enable_shaping(t.ptr))
+	return goBool(C.vte_terminal_get_enable_shaping(t.native()))
 }
 
 // SetEnableShaping controls whether or not the terminal will shape Arabic text.
 func (t *Terminal) SetEnableShaping(v bool) {
-	C.vte_terminal_set_enable_shaping(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_shaping(t.native(), gboolean(v))
 }
 
 // GetEnableSixel reports whether [SIXEL] image support is enabled.
 //
 // [SIXEL]: https://en.wikipedia.org/wiki/Sixel
 func (t *Terminal) GetEnableSixel() bool {
-	return goBool(C.vte_terminal_get_enable_sixel(t.ptr))
+	return goBool(C.vte_terminal_get_enable_sixel(t.native()))
 }
 
 // SetEnableSixel controls whether [SIXEL] image support is enabled.
 //
 // [SIXEL]: https://en.wikipedia.org/wiki/Sixel
 func (t *Terminal) SetEnableSixel(v bool) {
-	C.vte_terminal_set_enable_sixel(t.ptr, gboolean(v))
+	C.vte_terminal_set_enable_sixel(t.native(), gboolean(v))
 }
 
 // GetFont queries the terminal for information about the font which is used to
@@ -463,7 +439,7 @@ func (t *Terminal) SetEnableSixel(v bool) {
 // The actual font takes the font scale into account, this is not reflected in
 // the return value, the unscaled font is returned.
 func (t *Terminal) GetFont() *pango.FontDescription {
-	desc := C.vte_terminal_get_font(t.ptr)
+	desc := C.vte_terminal_get_font(t.native())
 	if desc == nil {
 		return nil
 	}
@@ -479,7 +455,7 @@ func (t *Terminal) SetFont(desc *pango.FontDescription) {
 	if desc != nil {
 		d = unwrapPangoFontDescription(desc)
 	}
-	C.vte_terminal_set_font(t.ptr, d)
+	C.vte_terminal_set_font(t.native(), d)
 }
 
 // SetFontFromString is a convenience method that sets font used for rendering
@@ -536,13 +512,13 @@ func (t *Terminal) SetFontFromString(s string) {
 	cstr := C.CString(s)
 	desc := C.pango_font_description_from_string(cstr)
 	C.free(unsafe.Pointer(cstr))
-	C.vte_terminal_set_font(t.ptr, desc)
+	C.vte_terminal_set_font(t.native(), desc)
 	C.free(unsafe.Pointer(desc))
 }
 
 // GetFontOptions returns terminal's font options.
 func (t *Terminal) GetFontOptions() *cairo.FontOptions {
-	options := C.vte_terminal_get_font_options(t.ptr)
+	options := C.vte_terminal_get_font_options(t.native())
 	if options == nil {
 		return nil
 	}
@@ -556,21 +532,21 @@ func (t *Terminal) SetFontOptions(options *cairo.FontOptions) {
 	if options != nil {
 		opt = unwrapCairoFontOptions(options)
 	}
-	C.vte_terminal_set_font_options(t.ptr, opt)
+	C.vte_terminal_set_font_options(t.native(), opt)
 }
 
 // GetInputEnabled reports whether the terminal allows user input. When user
 // input is disabled, key press and mouse button press and motion events are
 // not sent to the terminal's child.
 func (t *Terminal) GetInputEnabled() bool {
-	return goBool(C.vte_terminal_get_input_enabled(t.ptr))
+	return goBool(C.vte_terminal_get_input_enabled(t.native()))
 }
 
 // SetInputEnabled controls whether the terminal allows user input. When user
 // input is disabled, key press and mouse button press and motion events are
 // not sent to the terminal's child.
 func (t *Terminal) SetInputEnabled(v bool) {
-	C.vte_terminal_set_input_enabled(t.ptr, gboolean(v))
+	C.vte_terminal_set_input_enabled(t.native(), gboolean(v))
 }
 
 // GetPointerAutohide returns mouse autohide setting. When autohiding is
@@ -599,48 +575,48 @@ func (t *Terminal) SetPointerAutohide(v bool) {
 // to the bottom of the viewable history when the text is inserted
 // (e.g. by a paste).
 func (t *Terminal) GetScrollOnInsert() bool {
-	return goBool(C.vte_terminal_get_scroll_on_insert(t.ptr))
+	return goBool(C.vte_terminal_get_scroll_on_insert(t.native()))
 }
 
 // SetScrollOnInsert controls whether or not the terminal will forcibly scroll
 // to the bottom of the viewable history when the text is inserted
 // (e.g. by a paste).
 func (t *Terminal) SetScrollOnInsert(v bool) {
-	C.vte_terminal_set_scroll_on_insert(t.ptr, gboolean(v))
+	C.vte_terminal_set_scroll_on_insert(t.native(), gboolean(v))
 }
 
 // GetScrollOnKeystroke reports whether or not the terminal will forcibly
 // scroll to the bottom of the viewable history when the user presses a key.
 // Modifier keys do not trigger this behavior.
 func (t *Terminal) GetScrollOnKeystroke() bool {
-	return goBool(C.vte_terminal_get_scroll_on_keystroke(t.ptr))
+	return goBool(C.vte_terminal_get_scroll_on_keystroke(t.native()))
 }
 
 // SetScrollOnKeystroke controls whether or not the terminal will forcibly
 // scroll to the bottom of the viewable history when the user presses a key.
 // Modifier keys do not trigger this behavior.
 func (t *Terminal) SetScrollOnKeystroke(v bool) {
-	C.vte_terminal_set_scroll_on_keystroke(t.ptr, gboolean(v))
+	C.vte_terminal_set_scroll_on_keystroke(t.native(), gboolean(v))
 }
 
 // GetScrollOnOutput reports whether or not the terminal will forcibly scroll
 // to the bottom of the viewable history when the new data is received from the
 // child.
 func (t *Terminal) GetScrollOnOutput() bool {
-	return goBool(C.vte_terminal_get_scroll_on_output(t.ptr))
+	return goBool(C.vte_terminal_get_scroll_on_output(t.native()))
 }
 
 // SetScrollOnOutput controls whether or not the terminal will forcibly scroll
 // to the bottom of the viewable history when the new data is received from the
 // child.
 func (t *Terminal) SetScrollOnOutput(v bool) {
-	C.vte_terminal_set_scroll_on_output(t.ptr, gboolean(v))
+	C.vte_terminal_set_scroll_on_output(t.native(), gboolean(v))
 }
 
 // GetScrollUnit returns scroll measurement unit of terminal's
 // [github.com/gotk3/gotk3/gtk.Adjustment].
 func (t *Terminal) GetScrollUnit() ScrollUnit {
-	isPixels := goBool(C.vte_terminal_get_scroll_unit_is_pixels(t.ptr))
+	isPixels := goBool(C.vte_terminal_get_scroll_unit_is_pixels(t.native()))
 	if isPixels {
 		return SCROLL_UNIT_PIXELS
 	} else {
@@ -656,13 +632,13 @@ func (t *Terminal) GetScrollUnit() ScrollUnit {
 // kinetic scrolling.
 func (t *Terminal) SetScrollUnit(unit ScrollUnit) {
 	isPixels := unit == SCROLL_UNIT_PIXELS
-	C.vte_terminal_set_scroll_unit_is_pixels(t.ptr, gboolean(isPixels))
+	C.vte_terminal_set_scroll_unit_is_pixels(t.native(), gboolean(isPixels))
 }
 
 // GetScrollbackLines returns the length of the scrollback buffer used by the
 // terminal.
 func (t *Terminal) GetScrollbackLines() uint {
-	return uint(C.vte_terminal_get_scrollback_lines(t.ptr))
+	return uint(C.vte_terminal_get_scrollback_lines(t.native()))
 }
 
 // SetScrollbackLines sets the length of the scrollback buffer used by the
@@ -676,57 +652,57 @@ func (t *Terminal) GetScrollbackLines() uint {
 // types which have an alternate screen buffer, no scrollback is allowed on the
 // alternate screen buffer.
 func (t *Terminal) SetScrollbackLines(size int) {
-	C.vte_terminal_set_scrollback_lines(t.ptr, C.uintToGlong(C.uint(size)))
+	C.vte_terminal_set_scrollback_lines(t.native(), C.uintToGlong(C.uint(size)))
 }
 
 // GetTextBlinkMode reports whether or not the terminal will allow blinking text.
 func (t *Terminal) GetTextBlinkMode() TextBlinkMode {
-	return TextBlinkMode(C.vte_terminal_get_text_blink_mode(t.ptr))
+	return TextBlinkMode(C.vte_terminal_get_text_blink_mode(t.native()))
 }
 
 // SetTextBlinkMode controls whether or not the terminal will allow blinking text.
 func (t *Terminal) SetTextBlinkMode(mode TextBlinkMode) {
-	C.vte_terminal_set_text_blink_mode(t.ptr, C.VteTextBlinkMode(mode))
+	C.vte_terminal_set_text_blink_mode(t.native(), C.VteTextBlinkMode(mode))
 }
 
 // GetXAlign returns the horizontal alignment of terminal within its allocation.
 func (t *Terminal) GetXAlign() Align {
-	return Align(C.vte_terminal_get_xalign(t.ptr))
+	return Align(C.vte_terminal_get_xalign(t.native()))
 }
 
 // SetXAlign sets the horizontal alignment of terminal within its allocation.
 func (t *Terminal) SetXAlign(align Align) {
-	C.vte_terminal_set_xalign(t.ptr, C.VteAlign(align))
+	C.vte_terminal_set_xalign(t.native(), C.VteAlign(align))
 }
 
 // GetYAlign returns the vertical alignment of terminal within its allocation.
 func (t *Terminal) GetYAlign() Align {
-	return Align(C.vte_terminal_get_yalign(t.ptr))
+	return Align(C.vte_terminal_get_yalign(t.native()))
 }
 
 // SetYAlign sets the vertical alignment of terminal within its allocation.
 func (t *Terminal) SetYAlign(align Align) {
-	C.vte_terminal_set_yalign(t.ptr, C.VteAlign(align))
+	C.vte_terminal_set_yalign(t.native(), C.VteAlign(align))
 }
 
 // GetXFill returns the horizontal fillment of terminal within its allocation.
 func (t *Terminal) GetXFill() bool {
-	return goBool(C.vte_terminal_get_xfill(t.ptr))
+	return goBool(C.vte_terminal_get_xfill(t.native()))
 }
 
 // SetXFill sets the horizontal fillment of terminal within its allocation.
 func (t *Terminal) SetXFill(v bool) {
-	C.vte_terminal_set_xfill(t.ptr, gboolean(v))
+	C.vte_terminal_set_xfill(t.native(), gboolean(v))
 }
 
 // GetYFill returns the vertical fillment of terminal within its allocation.
 func (t *Terminal) GetYFill() bool {
-	return goBool(C.vte_terminal_get_yfill(t.ptr))
+	return goBool(C.vte_terminal_get_yfill(t.native()))
 }
 
 // SetYFill sets the vertical fillment of terminal within its allocation.
 func (t *Terminal) SetYFill(v bool) {
-	C.vte_terminal_set_yfill(t.ptr, gboolean(v))
+	C.vte_terminal_set_yfill(t.native(), gboolean(v))
 }
 
 // Spawn is a convenience function that wraps creating the [Pty] and
@@ -758,7 +734,7 @@ func (t *Terminal) Spawn(cmd *Command) {
 	defer cStringArrFree(envv)
 
 	C.vte_terminal_spawn_async(
-		t.ptr,
+		t.native(),
 		ptyFlags,
 		workdir,
 		&argv[0],
@@ -779,7 +755,7 @@ func (t *Terminal) Spawn(cmd *Command) {
 // cursor state, national character set state, status line, terminal modes
 // (insert/delete), selection state, and encoding.
 func (t *Terminal) Reset(clearTabstops, clearHistory bool) {
-	C.vte_terminal_reset(t.ptr, gboolean(clearTabstops), gboolean(clearTabstops))
+	C.vte_terminal_reset(t.native(), gboolean(clearTabstops), gboolean(clearTabstops))
 }
 
 // SetColors sets terminal colors.
@@ -830,7 +806,7 @@ func (t *Terminal) SetColors(background, foreground *gdk.RGBA, palette []*gdk.RG
 		p[i] = unwrapGdkRGBA(color)
 	}
 
-	C.vte_terminal_set_colors(t.ptr, fg, bg, p[0], size)
+	C.vte_terminal_set_colors(t.native(), fg, bg, p[0], size)
 	return nil
 }
 
@@ -852,8 +828,8 @@ func (t *Terminal) SetCursorColor(background, foreground *gdk.RGBA) {
 		fg = unwrapGdkRGBA(foreground)
 	}
 
-	C.vte_terminal_set_color_cursor(t.ptr, bg)
-	C.vte_terminal_set_color_cursor_foreground(t.ptr, fg)
+	C.vte_terminal_set_color_cursor(t.native(), bg)
+	C.vte_terminal_set_color_cursor_foreground(t.native(), fg)
 }
 
 // SetHighlightColor sets the color for the text which is highlighted.
@@ -874,8 +850,8 @@ func (t *Terminal) SetHighlightColor(background, foreground *gdk.RGBA) {
 		fg = unwrapGdkRGBA(foreground)
 	}
 
-	C.vte_terminal_set_color_highlight(t.ptr, bg)
-	C.vte_terminal_set_color_highlight_foreground(t.ptr, fg)
+	C.vte_terminal_set_color_highlight(t.native(), bg)
+	C.vte_terminal_set_color_highlight_foreground(t.native(), fg)
 }
 
 // MatchAddRegex adds the regular expression regex to the list of matching
@@ -888,27 +864,27 @@ func (t *Terminal) MatchAddRegex(regex *Regex, flags RegexMatchFlags) (MatchHand
 	if regex == nil {
 		return -1, fmt.Errorf("regex must not be nil")
 	}
-	return MatchHandle(C.vte_terminal_match_add_regex(t.ptr, regex.ptr, C.uint(flags))), nil
+	return MatchHandle(C.vte_terminal_match_add_regex(t.native(), regex.ptr, C.uint(flags))), nil
 }
 
 // MatchRemove removes the regular expression which is associated with handle
 // from the list of expressions which the terminal will highlight when the user
 // moves the mouse cursor over matching text.
 func (t *Terminal) MatchRemove(handle MatchHandle) {
-	C.vte_terminal_match_remove(t.ptr, C.int(handle))
+	C.vte_terminal_match_remove(t.native(), C.int(handle))
 }
 
 // MatchRemoveAll clears the list of regular expressions the terminal uses to
 // highlight text when the user moves the mouse cursor.
 func (t *Terminal) MatchRemoveAll() {
-	C.vte_terminal_match_remove_all(t.ptr)
+	C.vte_terminal_match_remove_all(t.native())
 }
 
 // MatchSetCursorName sets which cursor the terminal will use if the pointer is
 // over the pattern specified by tag.
 func (t *Terminal) MatchSetCursorName(handle MatchHandle, cursor string) {
 	cstr := C.CString(cursor)
-	C.vte_terminal_match_set_cursor_name(t.ptr, C.int(handle), cstr)
+	C.vte_terminal_match_set_cursor_name(t.native(), C.int(handle), cstr)
 	C.free(unsafe.Pointer(cstr))
 }
 
@@ -927,7 +903,7 @@ func (t *Terminal) MatchSetCursorName(handle MatchHandle, cursor string) {
 // they were added.
 func (t *Terminal) MatchCheckEvent(event *gdk.Event) (string, MatchHandle, error) {
 	handle := C.int(0)
-	cstr := C.vte_terminal_match_check_event(t.ptr, (*C.GdkEvent)(event.GdkEvent), &handle)
+	cstr := C.vte_terminal_match_check_event(t.native(), (*C.GdkEvent)(event.GdkEvent), &handle)
 	if cstr == nil {
 		return "", -1, fmt.Errorf("no matches found")
 	}
@@ -944,18 +920,18 @@ func (t *Terminal) MatchCheckEvent(event *gdk.Event) (string, MatchHandle, error
 // SearchFindNext searches the next string matching the search regex set with
 // [SearchSetRegex].
 func (t *Terminal) SearchFindNext() bool {
-	return goBool(C.vte_terminal_search_find_next(t.ptr))
+	return goBool(C.vte_terminal_search_find_next(t.native()))
 }
 
 // SearchFindPrev searches the previous string matching the search regex set
 // with [SearchSetRegex].
 func (t *Terminal) SearchFindPrev() bool {
-	return goBool(C.vte_terminal_search_find_previous(t.ptr))
+	return goBool(C.vte_terminal_search_find_previous(t.native()))
 }
 
 // SearchGetRegex returns [Regex] used for search, or nil if it is unset.
 func (t *Terminal) SearchGetRegex() *Regex {
-	ptr := C.vte_terminal_search_get_regex(t.ptr)
+	ptr := C.vte_terminal_search_get_regex(t.native())
 	if ptr == nil {
 		return nil
 	}
@@ -968,14 +944,14 @@ func (t *Terminal) SearchSetRegex(regex *Regex, flags RegexMatchFlags) {
 	if regex != nil {
 		r = regex.ptr
 	}
-	C.vte_terminal_search_set_regex(t.ptr, r, C.uint(flags))
+	C.vte_terminal_search_set_regex(t.native(), r, C.uint(flags))
 }
 
 // SearchSetWrapAround controls whether [Terminal.SearchFindNext] and
 // [Terminal.SearchFindPrev] wrap around to the beginning/end of the terminal
 // when reaching its end/beginning.
 func (t *Terminal) SearchSetWrapAround(v bool) {
-	C.vte_terminal_search_set_wrap_around(t.ptr, gboolean(v))
+	C.vte_terminal_search_set_wrap_around(t.native(), gboolean(v))
 }
 
 // ConnectBell calls callback when the a child sends a bell request to the
@@ -1245,8 +1221,8 @@ func (t *Terminal) ConnectAfterTermPropChanged(callback func(t *Terminal, prop T
 
 func (t *Terminal) signalCb(cb func(*Terminal)) any {
 	return func(o *glib.Object, s string) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term)
 		}
 	}
@@ -1254,8 +1230,8 @@ func (t *Terminal) signalCb(cb func(*Terminal)) any {
 
 func (t *Terminal) signalCbI(cb func(*Terminal, int)) any {
 	return func(o *glib.Object, i int) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term, i)
 		}
 	}
@@ -1263,8 +1239,8 @@ func (t *Terminal) signalCbI(cb func(*Terminal, int)) any {
 
 func (t *Terminal) signalCbS(cb func(*Terminal, string)) any {
 	return func(o *glib.Object, s string) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term, s)
 		}
 	}
@@ -1272,8 +1248,8 @@ func (t *Terminal) signalCbS(cb func(*Terminal, string)) any {
 
 func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
 	return func(o *glib.Object, s string) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term, TermProp(s))
 		}
 	}
@@ -1281,8 +1257,8 @@ func (t *Terminal) signalCbProp(cb func(*Terminal, TermProp)) any {
 
 func (t *Terminal) signalCbSRect(cb func(*Terminal, string, *gdk.Rectangle)) any {
 	return func(o *glib.Object, s string, r uintptr) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term, s, gdk.WrapRectangle(r))
 		}
 	}
@@ -1290,8 +1266,8 @@ func (t *Terminal) signalCbSRect(cb func(*Terminal, string, *gdk.Rectangle)) any
 
 func (t *Terminal) signalCbUU(cb func(*Terminal, uint, uint)) any {
 	return func(o *glib.Object, w, h uint) {
-		term, err := terminalFromGObject(o)
-		if err == nil {
+		term := wrapTerminal(o)
+		if term != nil {
 			cb(term, w, h)
 		}
 	}
