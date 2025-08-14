@@ -5,6 +5,12 @@ package vte
 //
 // #include "glib.go.h"
 import "C"
+import (
+	"runtime"
+	"unsafe"
+
+	"github.com/gotk3/gotk3/glib"
+)
 
 // RegexOption allows to configure [Regex].
 type RegexOption func(*Regex)
@@ -52,7 +58,7 @@ func RegexNew(pattern string, options ...RegexOption) (*Regex, error) {
 		pattern: pattern,
 		purpose: REGEX_PURPOSE_SEARCH,
 
-		// NOTE: both vte_terminal_match_add_regex and vter_terminal_search_add_regex
+		// NOTE: both vte_terminal_match_add_regex and vte_terminal_search_add_regex
 		// require this flag
 		flags: REGEX_COMPILE_FLAGS_MULTILINE,
 	}
@@ -90,10 +96,40 @@ func RegexNew(pattern string, options ...RegexOption) (*Regex, error) {
 		return nil, errNilPointer(function)
 	}
 
+	runtime.SetFinalizer(r, func(r *Regex) { glib.FinalizerStrategy(r.Unref) })
+
 	return r, nil
+}
+
+func wrapRegex(ptr *C.VteRegex) *Regex {
+	r := &Regex{ptr: ptr}
+	runtime.SetFinalizer(r, func(r *Regex) { glib.FinalizerStrategy(r.Unref) })
+	return r
 }
 
 // String returns the source pattern used to compile the regular expression.
 func (r *Regex) String() string {
 	return r.pattern
+}
+
+// Ref increases the reference count of regex by 1.
+//
+// Reference counting is handled at package level. Most applications should
+// not need to call this.
+func (r *Regex) Ref() {
+	C.vte_regex_ref(r.ptr)
+}
+
+// Unref decreases the reference count of regex by 1, and frees it whenever
+// the count reaches 0.
+//
+// Reference counting is handled at package level. Most applications should
+// not need to call this.
+func (r *Regex) Unref() {
+	C.vte_regex_unref(r.ptr)
+}
+
+// Native returns a pointer to the underlying VteRegex.
+func (r *Regex) Native() uintptr {
+	return uintptr(unsafe.Pointer(r.ptr))
 }

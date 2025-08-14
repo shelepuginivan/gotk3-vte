@@ -959,7 +959,7 @@ func (t *Terminal) SearchGetRegex() *Regex {
 	if ptr == nil {
 		return nil
 	}
-	return &Regex{ptr: ptr}
+	return wrapRegex(ptr)
 }
 
 // SearchSetRegex sets [Regex] for search. Use nil to reset regex.
