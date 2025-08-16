@@ -40,56 +40,57 @@ type Command struct {
 	OnSpawn func(pid int, err error)
 }
 
-// WithEnv appends variable to the command environment.
+// CommandWithEnv appends variable to the command environment.
 //
 // Can be used multiple times.
-func WithEnv(name string, value any) CommandOption {
+func CommandWithEnv(name string, value any) CommandOption {
 	return func(c *Command) {
 		c.Env = append(c.Env, fmt.Sprintf("%s=%v", name, value))
 	}
 }
 
-// WithWorkdir sets command working directory.
-func WithWorkdir(workdir string) CommandOption {
+// CommandWithWorkdir sets command working directory.
+func CommandWithWorkdir(workdir string) CommandOption {
 	return func(c *Command) {
 		c.Dir = workdir
 	}
 }
 
-// WithSpawnFlags appends command spawn flags.
+// CommandWithSpawnFlags appends command spawn flags.
 //
 // Can be used multiple times.
-func WithSpawnFlags(flags SpawnFlags) CommandOption {
+func CommandWithSpawnFlags(flags SpawnFlags) CommandOption {
 	return func(c *Command) {
 		c.SpawnFlags |= flags
 	}
 }
 
-// WithPtyFlags appends command PTY flags.
+// CommandWithPtyFlags appends command PTY flags.
 //
 // Can be used multiple times.
-func WithPtyFlags(flags PtyFlags) CommandOption {
+func CommandWithPtyFlags(flags PtyFlags) CommandOption {
 	return func(c *Command) {
 		c.PtyFlags |= flags
 	}
 }
 
-// WithTimeout sets command timeout.
-func WithTimeout(timeout time.Duration) CommandOption {
+// CommandWithTimeout sets command timeout.
+func CommandWithTimeout(timeout time.Duration) CommandOption {
 	return func(c *Command) {
 		c.Timeout = timeout
 	}
 }
 
-// WithCancellable sets command cancellable.
-func WithCancellable(cancellable *glib.Cancellable) CommandOption {
+// CommandWithCancellable sets command cancellable.
+func CommandWithCancellable(cancellable *glib.Cancellable) CommandOption {
 	return func(c *Command) {
 		c.Cancellable = cancellable
 	}
 }
 
-// WithOnSpawn sets callback that runs when command starts or fails to start.
-func WithOnSpawn(callback func(pid int, err error)) CommandOption {
+// CommandWithOnSpawn sets callback that runs when command starts or fails to
+// start.
+func CommandWithOnSpawn(callback func(pid int, err error)) CommandOption {
 	return func(c *Command) {
 		c.OnSpawn = callback
 	}
