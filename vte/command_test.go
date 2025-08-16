@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewCommand(t *testing.T) {
-	cmd := vte.NewCommand([]string{"/usr/bin/zsh", "-c", "echo something"})
+	cmd := vte.CommandNew([]string{"/usr/bin/zsh", "-c", "echo something"})
 
 	cwd, _ := os.Getwd()
 
@@ -28,7 +28,7 @@ func TestNewCommand(t *testing.T) {
 }
 
 func TestCommandWithEnv(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithEnv("X_VTE_TEST", "TestCommandWithEnv"),
 		vte.CommandWithEnv("X_VTE_ANOTHER", "something"),
@@ -43,7 +43,7 @@ func TestCommandWithEnv(t *testing.T) {
 }
 
 func TestCommandWithWorkdir(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithWorkdir("/tmp"),
 	)
@@ -52,7 +52,7 @@ func TestCommandWithWorkdir(t *testing.T) {
 }
 
 func TestCommandWithSpawnFlags(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithSpawnFlags(vte.SPAWN_CHILD_INHERITS_STDERR),
 		vte.CommandWithSpawnFlags(vte.SPAWN_DO_NOT_REAP_CHILD),
@@ -69,7 +69,7 @@ func TestCommandWithSpawnFlags(t *testing.T) {
 }
 
 func TestCommandWithPtyFlags(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithPtyFlags(vte.PTY_NO_CTTY),
 		vte.CommandWithPtyFlags(vte.PTY_NO_SESSION),
@@ -86,7 +86,7 @@ func TestCommandWithPtyFlags(t *testing.T) {
 }
 
 func TestCommandWithTimeout(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithTimeout(time.Hour),
 	)
@@ -97,7 +97,7 @@ func TestCommandWithTimeout(t *testing.T) {
 func TestCommandWithCancellable(t *testing.T) {
 	cancellable, _ := glib.CancellableNew()
 
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithCancellable(cancellable),
 	)
@@ -107,7 +107,7 @@ func TestCommandWithCancellable(t *testing.T) {
 }
 
 func TestCommandWithOnSpawn(t *testing.T) {
-	cmd := vte.NewCommand(
+	cmd := vte.CommandNew(
 		nil,
 		vte.CommandWithOnSpawn(func(pid int, err error) {
 			fmt.Println(pid, err)

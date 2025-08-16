@@ -96,8 +96,8 @@ func CommandWithOnSpawn(callback func(pid int, err error)) CommandOption {
 	}
 }
 
-// NewCommand creates a new [Command].
-func NewCommand(args []string, options ...CommandOption) *Command {
+// CommandNew creates a new [Command].
+func CommandNew(args []string, options ...CommandOption) *Command {
 	c := &Command{
 		Args: args,
 	}
