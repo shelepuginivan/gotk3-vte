@@ -916,6 +916,11 @@ func (t *Terminal) MatchAddRegex(regex *Regex, flags RegexMatchFlags) (MatchHand
 	if regex == nil {
 		return -1, fmt.Errorf("regex must not be nil")
 	}
+
+	if regex.purpose != REGEX_PURPOSE_MATCH {
+		return -1, fmt.Errorf("regex purpose is not match")
+	}
+
 	return MatchHandle(C.vte_terminal_match_add_regex(t.native(), regex.ptr, C.uint(flags))), nil
 }
 
