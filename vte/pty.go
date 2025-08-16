@@ -8,6 +8,7 @@ package vte
 // #include "vte.go.h"
 import "C"
 import (
+	"fmt"
 	"os"
 	"unsafe"
 
@@ -41,6 +42,10 @@ func (pty *Pty) native() *C.VtePty {
 
 // PtyNewSync allocates a new pseudo-terminal.
 func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
+	if cancellable == nil {
+		return nil, fmt.Errorf("cancellable must not be nil")
+	}
+
 	var (
 		gerr *C.GError
 		c    = C.toCancellable(unsafe.Pointer(cancellable.GObject))
@@ -63,6 +68,10 @@ func PtyNewSync(flags PtyFlags, cancellable *glib.Cancellable) (*Pty, error) {
 // PtyNewForeignSync creates a new [Pty] for the PTY master file. Newly created
 // [Pty] will take ownership of PTY file descriptor and close it on finalize.
 func PtyNewForeignSync(ptmx *os.File, cancellable *glib.Cancellable) (*Pty, error) {
+	if cancellable == nil {
+		return nil, fmt.Errorf("cancellable must not be nil")
+	}
+
 	var (
 		gerr *C.GError
 		c    = C.toCancellable(unsafe.Pointer(cancellable.GObject))
