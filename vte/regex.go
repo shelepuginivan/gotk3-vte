@@ -20,7 +20,6 @@ type RegexOption func(*Regex)
 type Regex struct {
 	ptr *C.VteRegex
 
-	pattern    string
 	purpose    RegexPurpose
 	flags      RegexCompileFlags
 	extraFlags RegexCompileExtraFlags
@@ -55,7 +54,6 @@ func RegexWithCompileExtraFlags(extraFlags RegexCompileExtraFlags) RegexOption {
 // RegexNew returns a new [Regex].
 func RegexNew(pattern string, options ...RegexOption) (*Regex, error) {
 	r := &Regex{
-		pattern: pattern,
 		purpose: REGEX_PURPOSE_SEARCH,
 
 		// NOTE: both vte_terminal_match_add_regex and vte_terminal_search_add_regex
@@ -105,11 +103,6 @@ func wrapRegex(ptr *C.VteRegex) *Regex {
 	r := &Regex{ptr: ptr}
 	runtime.SetFinalizer(r, func(r *Regex) { glib.FinalizerStrategy(r.Unref) })
 	return r
-}
-
-// String returns the source pattern used to compile the regular expression.
-func (r *Regex) String() string {
-	return r.pattern
 }
 
 // Ref increases the reference count of regex by 1.
