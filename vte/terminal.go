@@ -551,6 +551,16 @@ func (t *Terminal) SetFontOptions(options *cairo.FontOptions) {
 	C.vte_terminal_set_font_options(t.native(), opt)
 }
 
+// GetFontScale returns font scale of the terminal.
+func (t *Terminal) GetFontScale() float64 {
+	return float64(C.vte_terminal_get_font_scale(t.native()))
+}
+
+// SetFontScale sets font scale of the terminal.
+func (t *Terminal) SetFontScale(scale float64) {
+	C.vte_terminal_set_font_scale(t.native(), C.gdouble(scale))
+}
+
 // GetInputEnabled reports whether the terminal allows user input. When user
 // input is disabled, key press and mouse button press and motion events are
 // not sent to the terminal's child.
