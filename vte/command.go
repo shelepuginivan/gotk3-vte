@@ -97,8 +97,6 @@ func WithOnSpawn(callback func(pid int, err error)) CommandOption {
 
 // NewCommand creates a new [Command].
 func NewCommand(args []string, options ...CommandOption) *Command {
-	glib.CancellableNew()
-
 	c := &Command{
 		Args: args,
 	}
