@@ -165,7 +165,8 @@ func (t *Terminal) GetPty() *Pty {
 // SetPty sets [Pty] to use in terminal. Use nil to unset the pty.
 func (t *Terminal) SetPty(pty *Pty) {
 	if pty == nil {
-		pty = &Pty{}
+		t.SetProperty("pty", nil)
+		return
 	}
 
 	C.vte_terminal_set_pty(t.native(), pty.native())
