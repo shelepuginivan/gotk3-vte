@@ -305,6 +305,10 @@ func (t *Terminal) GetContextMenu() gtk.IWidget {
 		return nil
 	}
 
+	if menu == (*gtk.Menu)(nil) {
+		return nil
+	}
+
 	widget, ok := menu.(gtk.IWidget)
 	if !ok {
 		return nil
@@ -327,12 +331,16 @@ func (t *Terminal) SetContextMenu(menu gtk.IWidget) {
 
 // GetContextMenuModel returns context menu model of the terminal.
 func (t *Terminal) GetContextMenuModel() *glib.MenuModel {
-	menu, err := t.GetProperty("context-menu-model")
+	model, err := t.GetProperty("context-menu-model")
 	if err != nil {
 		return nil
 	}
 
-	widget, ok := menu.(*glib.MenuModel)
+	if model == (*glib.Object)(nil) {
+		return nil
+	}
+
+	widget, ok := model.(*glib.MenuModel)
 	if !ok {
 		return nil
 	}
