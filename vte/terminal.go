@@ -1056,7 +1056,7 @@ func (t *Terminal) ConnectAfterChildExited(callback func(t *Terminal, status int
 }
 
 // ConnectCommit calls callback when the terminal receives input from the user
-// and prepares to send it to the child process..
+// and prepares to send it to the child process.
 //
 // See [github.com/gotk3/gotk3/glib.Object.Connect] for more information about
 // signal handling.
