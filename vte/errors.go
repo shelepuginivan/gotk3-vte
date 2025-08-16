@@ -4,31 +4,31 @@ package vte
 import "C"
 import "fmt"
 
-type ErrCgoCall struct {
+type errCgoCall struct {
 	Function string
 	Detail   string
 }
 
-func (err ErrCgoCall) Error() string {
+func (err errCgoCall) Error() string {
 	return fmt.Sprintf("vte: %s() %s", err.Function, err.Detail)
 }
 
 func errFromGError(function string, gerr *C.GError) error {
-	return ErrCgoCall{
+	return errCgoCall{
 		Function: function,
 		Detail:   goString(gerr.message),
 	}
 }
 
 func errNilPointer(function string) error {
-	return ErrCgoCall{
+	return errCgoCall{
 		Function: function,
-		Detail:   "returned a nil pointer",
+		Detail:   "returned nil pointer",
 	}
 }
 
 func errFailed(function string) error {
-	return ErrCgoCall{
+	return errCgoCall{
 		Function: function,
 		Detail:   "failed",
 	}
