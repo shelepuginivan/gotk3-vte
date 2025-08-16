@@ -1277,7 +1277,7 @@ func (t *Terminal) ConnectAfterTermPropChanged(callback func(t *Terminal, prop T
 }
 
 func (t *Terminal) signalCb(cb func(*Terminal)) any {
-	return func(o *glib.Object, s string) {
+	return func(o *glib.Object) {
 		term := WrapTerminal(o)
 		if term != nil {
 			cb(term)
