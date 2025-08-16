@@ -850,7 +850,15 @@ func (t *Terminal) SetColors(background, foreground *gdk.RGBA, palette []*gdk.RG
 		p[i] = unwrapGdkRGBA(color)
 	}
 
-	C.vte_terminal_set_colors(t.native(), fg, bg, p[0], size)
+	var cPalette *C.GdkRGBA
+
+	if l > 0 {
+		cPalette = p[0]
+	} else {
+		cPalette = (*C.GdkRGBA)(C.NULL)
+	}
+
+	C.vte_terminal_set_colors(t.native(), fg, bg, cPalette, size)
 	return nil
 }
 
