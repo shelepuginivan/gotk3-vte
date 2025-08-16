@@ -162,10 +162,9 @@ func (t *Terminal) GetPty() *Pty {
 	return wrapPty(glib.Take(unsafe.Pointer(pty)))
 }
 
-// SetPty sets [Pty] to use in terminal. Use nil to unset the pty.
+// SetPty sets [Pty] to use in terminal. If pty is nil, this function is no-op.
 func (t *Terminal) SetPty(pty *Pty) {
 	if pty == nil {
-		t.SetProperty("pty", nil)
 		return
 	}
 
