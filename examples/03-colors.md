@@ -92,4 +92,4 @@ func main() {
 }
 ```
 
-![Transparent terminal window](./img/03-colors-palette.webp)
+![Transparent terminal window](./img/03-colors-transparency.webp)
