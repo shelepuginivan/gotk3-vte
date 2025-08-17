@@ -109,6 +109,10 @@ func (t *Terminal) PasteText(text string) {
 
 // Feed writes text to the standard output of the terminal as if it were
 // received from a child process.
+//
+// Note that caret returns (CR, or \r) are not appended to the end of lines,
+// which may affect how the multiline text is written. Add caret returns
+// manually if it is required.
 func (t *Terminal) Feed(text string) {
 	cstr := C.CString(text)
 	length := C.intToGssize(C.int(len(text)))
@@ -118,6 +122,10 @@ func (t *Terminal) Feed(text string) {
 
 // FeedChild writes text to the standard input of the terminal as if it were
 // entered by the user at the keyboard.
+//
+// Note that caret returns (CR, or \r) are not appended to the end of lines,
+// which may affect how the multiline text is written. Add caret returns
+// manually if it is required.
 func (t *Terminal) FeedChild(text string) {
 	cstr := C.CString(text)
 	length := C.intToGssize(C.int(len(text)))
