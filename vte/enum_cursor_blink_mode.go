@@ -15,5 +15,5 @@ const (
 	CURSOR_BLINK_ON CursorBlinkMode = C.VTE_CURSOR_BLINK_ON
 
 	// Cursor does not blink.
-	CURSOR_BLINK_OFF CursorBlinkMode = C.VTE_CURSOR_BLINK_ON
+	CURSOR_BLINK_OFF CursorBlinkMode = C.VTE_CURSOR_BLINK_OFF
 )
