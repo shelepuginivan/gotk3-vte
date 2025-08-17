@@ -1,5 +1,9 @@
 # gotk3-vte
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/shelepuginivan/gotk3-vte.svg)](https://pkg.go.dev/github.com/shelepuginivan/gotk3-vte/vte)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shelepuginivan/gotk3-vte)](https://goreportcard.com/report/github.com/shelepuginivan/gotk3-vte)
+[![License: MIT](https://img.shields.io/badge/License-MIT-00cc00.svg)](https://github.com/shelepuginivan/gotk3-vte/blob/main/LICENSE)
+
 Package `gotk3-vte` provides [gotk3](https://github.com/gotk3/gotk3)-compatible
 bindings for [VTE](https://gitlab.gnome.org/GNOME/vte).
 
